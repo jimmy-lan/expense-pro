@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { Typography, Input, Button } from "@material-tailwind/react";
+import authPic from "../assets/images/auth-pic.jpg";
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
@@ -13,7 +15,7 @@ const LoginPage: React.FC = () => {
     setError(null);
     setIsLoading(true);
     try {
-      const res = await fetch("http://localhost:3001/api/v1/login", {
+      const res = await fetch("/api/v1/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -34,53 +36,61 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-      <div className="w-full max-w-md bg-white rounded-xl shadow p-6">
-        <h1 className="text-2xl font-bold mb-4 text-center">Sign in</h1>
-        {error && (
-          <div className="bg-red-50 text-red-700 px-3 py-2 rounded mb-3 text-sm">
-            {error}
-          </div>
-        )}
-        <form onSubmit={onSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Email
-            </label>
-            <input
+    <div className="min-h-screen bg-white grid grid-cols-1 md:grid-cols-2">
+      <div className="flex items-center justify-center p-6 md:p-10">
+        <div className="w-full max-w-md">
+          <Typography variant="h3" className="mb-1 text-gray-900 font-bold">
+            Sign in
+          </Typography>
+          <Typography variant="small" className="mb-6 text-gray-600">
+            Welcome back
+          </Typography>
+
+          {error && (
+            <div className="bg-red-50 text-red-700 px-3 py-2 rounded mb-4 text-sm">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={onSubmit} className="space-y-4">
+            <Input
+              label="Email"
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 w-full border rounded px-3 py-2 focus:outline-none focus:ring"
+              onChange={(e) => setEmail((e.target as HTMLInputElement).value)}
               required
+              crossOrigin={undefined}
             />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Password
-            </label>
-            <input
+            <Input
+              label="Password"
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 w-full border rounded px-3 py-2 focus:outline-none focus:ring"
+              onChange={(e) =>
+                setPassword((e.target as HTMLInputElement).value)
+              }
               required
+              crossOrigin={undefined}
             />
-          </div>
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:opacity-50"
-          >
-            {isLoading ? "Signing in..." : "Sign in"}
-          </button>
-        </form>
-        <p className="text-sm text-gray-600 mt-4 text-center">
-          No account?{" "}
-          <Link to="/signup" className="text-blue-600">
-            Create one
-          </Link>
-        </p>
+            <Button type="submit" disabled={isLoading} fullWidth>
+              {isLoading ? "Signing in..." : "Sign in"}
+            </Button>
+          </form>
+
+          <Typography variant="small" className="mt-4 text-gray-600">
+            No account?{" "}
+            <Link to="/signup" className="text-blue-600">
+              Create one
+            </Link>
+          </Typography>
+        </div>
+      </div>
+
+      <div className="hidden md:block">
+        <img
+          src={authPic}
+          alt="Sign in illustration"
+          className="w-full h-full object-cover"
+        />
       </div>
     </div>
   );

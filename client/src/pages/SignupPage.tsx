@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { Typography, Input, Button } from "@material-tailwind/react";
+import authPic from "../assets/images/auth-pic.jpg";
 
 const SignupPage: React.FC = () => {
   const navigate = useNavigate();
@@ -16,7 +18,7 @@ const SignupPage: React.FC = () => {
     setError(null);
     setIsLoading(true);
     try {
-      const res = await fetch("http://localhost:3001/api/v1/signup", {
+      const res = await fetch("/api/v1/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -36,7 +38,7 @@ const SignupPage: React.FC = () => {
         throw new Error(msg);
       }
       const data = await res.json();
-      localStorage.setItem("user", JSON.stringify(data));
+      localStorage.setItem("user", JSON.stringify(data.user));
       navigate("/");
     } catch (err: any) {
       setError(err.message || "Something went wrong");
@@ -46,91 +48,91 @@ const SignupPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-      <div className="w-full max-w-md bg-white rounded-xl shadow p-6">
-        <h1 className="text-2xl font-bold mb-4 text-center">Create account</h1>
-        {error && (
-          <div className="bg-red-50 text-red-700 px-3 py-2 rounded mb-3 text-sm">
-            {error}
-          </div>
-        )}
-        <form onSubmit={onSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                First name
-              </label>
-              <input
-                type="text"
+    <div className="min-h-screen bg-white grid grid-cols-1 md:grid-cols-2">
+      <div className="flex items-center justify-center p-6 md:p-10">
+        <div className="w-full max-w-md">
+          <Typography variant="h3" className="mb-1 text-gray-900 font-bold">
+            Create account
+          </Typography>
+          <Typography variant="small" className="mb-6 text-gray-600">
+            Join and start sharing expenses
+          </Typography>
+
+          {error && (
+            <div className="bg-red-50 text-red-700 px-3 py-2 rounded mb-4 text-sm">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={onSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 gap-4">
+              <Input
+                label="First name"
                 value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                className="mt-1 w-full border rounded px-3 py-2 focus:outline-none focus:ring"
+                onChange={(e) =>
+                  setFirstName((e.target as HTMLInputElement).value)
+                }
                 required
+                crossOrigin={undefined}
               />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Last name
-              </label>
-              <input
-                type="text"
+              <Input
+                label="Last name"
                 value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                className="mt-1 w-full border rounded px-3 py-2 focus:outline-none focus:ring"
+                onChange={(e) =>
+                  setLastName((e.target as HTMLInputElement).value)
+                }
                 required
+                crossOrigin={undefined}
+              />
+              <Input
+                label="Email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail((e.target as HTMLInputElement).value)}
+                required
+                crossOrigin={undefined}
+              />
+              <Input
+                label="Password"
+                type="password"
+                value={password}
+                onChange={(e) =>
+                  setPassword((e.target as HTMLInputElement).value)
+                }
+                required
+                crossOrigin={undefined}
+              />
+              <Input
+                label="Confirm password"
+                type="password"
+                value={passwordConfirmation}
+                onChange={(e) =>
+                  setPasswordConfirmation((e.target as HTMLInputElement).value)
+                }
+                required
+                crossOrigin={undefined}
               />
             </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Email
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 w-full border rounded px-3 py-2 focus:outline-none focus:ring"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Password
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 w-full border rounded px-3 py-2 focus:outline-none focus:ring"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Confirm Password
-            </label>
-            <input
-              type="password"
-              value={passwordConfirmation}
-              onChange={(e) => setPasswordConfirmation(e.target.value)}
-              className="mt-1 w-full border rounded px-3 py-2 focus:outline-none focus:ring"
-              required
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:opacity-50"
-          >
-            {isLoading ? "Creating account..." : "Create account"}
-          </button>
-        </form>
-        <p className="text-sm text-gray-600 mt-4 text-center">
-          Already have an account?{" "}
-          <Link to="/login" className="text-blue-600">
-            Sign in
-          </Link>
-        </p>
+            <Button type="submit" disabled={isLoading} fullWidth>
+              {isLoading ? "Creating account..." : "Create account"}
+            </Button>
+          </form>
+
+          <Typography variant="small" className="mt-4 text-gray-600">
+            Already have an account?{" "}
+            <Link to="/login" className="text-blue-600">
+              Sign in
+            </Link>
+          </Typography>
+        </div>
+      </div>
+
+      <div className="hidden md:block">
+        <img
+          src={authPic}
+          alt="Sign up illustration"
+          className="w-full h-full object-cover"
+        />
       </div>
     </div>
   );

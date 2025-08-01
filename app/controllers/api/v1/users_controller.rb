@@ -3,7 +3,7 @@ class Api::V1::UsersController < ApplicationController
     user = User.new(user_params)
     if user.save
       set_login_cookie(user)
-      render json: serialize_user(user), status: :created
+      render json: { user: serialize_user(user) }, status: :created
     else
       render json: { errors: user.errors.full_messages }, status: :unprocessable_entity
     end
@@ -11,7 +11,7 @@ class Api::V1::UsersController < ApplicationController
 
   def me
     if current_user
-      render json: serialize_user(current_user)
+      render json: { user: serialize_user(current_user) }
     else
       render json: { user: nil }
     end
