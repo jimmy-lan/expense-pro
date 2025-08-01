@@ -1,22 +1,61 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Typography, Input, Button } from "@material-tailwind/react";
+import { Typography, Input } from "@material-tailwind/react";
+import { Button } from "../components/ui/Button";
+import { useForm, Controller } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
 import authPic from "../assets/images/auth-pic.jpg";
+import { Logo } from "../components";
+
+interface SignupFormFields {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+  passwordConfirmation: string;
+}
+
+const schema: yup.ObjectSchema<SignupFormFields> = yup.object({
+  firstName: yup.string().required("First name is required"),
+  lastName: yup.string().required("Last name is required"),
+  email: yup
+    .string()
+    .email("Enter a valid email")
+    .required("Email is required"),
+  password: yup
+    .string()
+    .min(6, "Min 6 characters")
+    .required("Password is required"),
+  passwordConfirmation: yup
+    .string()
+    .oneOf([yup.ref("password")], "Passwords must match")
+    .required("Confirm your password"),
+});
+
+const defaultValues: SignupFormFields = {
+  firstName: "",
+  lastName: "",
+  email: "",
+  password: "",
+  passwordConfirmation: "",
+};
 
 const SignupPage: React.FC = () => {
   const navigate = useNavigate();
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [passwordConfirmation, setPasswordConfirmation] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
 
-  const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setIsLoading(true);
+  const {
+    control,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<SignupFormFields>({
+    resolver: yupResolver(schema),
+    defaultValues,
+  });
+
+  const onSubmit = async (values: SignupFormFields) => {
+    setServerError(null);
     try {
       const res = await fetch("/api/v1/signup", {
         method: "POST",
@@ -24,11 +63,11 @@ const SignupPage: React.FC = () => {
         credentials: "include",
         body: JSON.stringify({
           user: {
-            first_name: firstName,
-            last_name: lastName,
-            email,
-            password,
-            password_confirmation: passwordConfirmation,
+            first_name: values.firstName,
+            last_name: values.lastName,
+            email: values.email,
+            password: values.password,
+            password_confirmation: values.passwordConfirmation,
           },
         }),
       });
@@ -41,15 +80,16 @@ const SignupPage: React.FC = () => {
       localStorage.setItem("user", JSON.stringify(data.user));
       navigate("/");
     } catch (err: any) {
-      setError(err.message || "Something went wrong");
-    } finally {
-      setIsLoading(false);
+      setServerError(err.message || "Something went wrong");
     }
   };
 
   return (
-    <div className="min-h-screen bg-white grid grid-cols-1 md:grid-cols-2">
-      <div className="flex items-center justify-center p-6 md:p-10">
+    <div className="min-h-screen md:h-screen md:overflow-hidden bg-white grid grid-cols-1 md:grid-cols-5">
+      <div className="absolute top-6 left-6 z-10 p-0">
+        <Logo />
+      </div>
+      <div className="flex items-center justify-center p-6 pt-0 md:pt-6 md:p-10 md:overflow-y-auto md:h-screen md:col-span-3">
         <div className="w-full max-w-md">
           <Typography variant="h3" className="mb-1 text-gray-900 font-bold">
             Create account
@@ -58,76 +98,133 @@ const SignupPage: React.FC = () => {
             Join and start sharing expenses
           </Typography>
 
-          {error && (
+          {serverError && (
             <div className="bg-red-50 text-red-700 px-3 py-2 rounded mb-4 text-sm">
-              {error}
+              {serverError}
             </div>
           )}
 
-          <form onSubmit={onSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid grid-cols-1 gap-4">
-              <Input
-                label="First name"
-                value={firstName}
-                onChange={(e) =>
-                  setFirstName((e.target as HTMLInputElement).value)
-                }
-                required
-                crossOrigin={undefined}
-              />
-              <Input
-                label="Last name"
-                value={lastName}
-                onChange={(e) =>
-                  setLastName((e.target as HTMLInputElement).value)
-                }
-                required
-                crossOrigin={undefined}
-              />
-              <Input
-                label="Email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail((e.target as HTMLInputElement).value)}
-                required
-                crossOrigin={undefined}
-              />
-              <Input
-                label="Password"
-                type="password"
-                value={password}
-                onChange={(e) =>
-                  setPassword((e.target as HTMLInputElement).value)
-                }
-                required
-                crossOrigin={undefined}
-              />
-              <Input
-                label="Confirm password"
-                type="password"
-                value={passwordConfirmation}
-                onChange={(e) =>
-                  setPasswordConfirmation((e.target as HTMLInputElement).value)
-                }
-                required
-                crossOrigin={undefined}
-              />
+              <div>
+                <Controller
+                  name="firstName"
+                  control={control}
+                  render={({ field }) => (
+                    <Input
+                      {...field}
+                      label="First name"
+                      error={!!errors.firstName}
+                      autoComplete="given-name"
+                    />
+                  )}
+                />
+                {errors.firstName && (
+                  <p className="mt-1 text-xs text-red-600">
+                    {errors.firstName.message}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <Controller
+                  name="lastName"
+                  control={control}
+                  render={({ field }) => (
+                    <Input
+                      {...field}
+                      label="Last name"
+                      error={!!errors.lastName}
+                      autoComplete="family-name"
+                    />
+                  )}
+                />
+                {errors.lastName && (
+                  <p className="mt-1 text-xs text-red-600">
+                    {errors.lastName.message}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <Controller
+                  name="email"
+                  control={control}
+                  render={({ field }) => (
+                    <Input
+                      {...field}
+                      label="Email"
+                      type="email"
+                      error={!!errors.email}
+                      autoComplete="email"
+                    />
+                  )}
+                />
+                {errors.email && (
+                  <p className="mt-1 text-xs text-red-600">
+                    {errors.email.message}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <Controller
+                  name="password"
+                  control={control}
+                  render={({ field }) => (
+                    <Input
+                      {...field}
+                      label="Password"
+                      type="password"
+                      error={!!errors.password}
+                      autoComplete="new-password"
+                    />
+                  )}
+                />
+                {errors.password && (
+                  <p className="mt-1 text-xs text-red-600">
+                    {errors.password.message}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <Controller
+                  name="passwordConfirmation"
+                  control={control}
+                  render={({ field }) => (
+                    <Input
+                      {...field}
+                      label="Confirm password"
+                      type="password"
+                      error={!!errors.passwordConfirmation}
+                      autoComplete="new-password"
+                    />
+                  )}
+                />
+                {errors.passwordConfirmation && (
+                  <p className="mt-1 text-xs text-red-600">
+                    {errors.passwordConfirmation.message}
+                  </p>
+                )}
+              </div>
             </div>
-            <Button type="submit" disabled={isLoading} fullWidth>
-              {isLoading ? "Creating account..." : "Create account"}
+
+            <Button type="submit" disabled={isSubmitting} fullWidth>
+              {isSubmitting ? "Creating account..." : "Create account"}
             </Button>
           </form>
 
           <Typography variant="small" className="mt-4 text-gray-600">
             Already have an account?{" "}
-            <Link to="/login" className="text-blue-600">
+            <Link to="/login" className="text-primary hover:text-primary/80">
               Sign in
             </Link>
           </Typography>
         </div>
       </div>
 
-      <div className="hidden md:block">
+      <div className="hidden md:block md:col-span-2">
         <img
           src={authPic}
           alt="Sign up illustration"
