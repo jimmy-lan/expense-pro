@@ -61,5 +61,3 @@ export const Button = React.forwardRef<NativeMTButtonRef, AppButtonProps>(
     );
   }
 );
-
-Button.displayName = "Button";

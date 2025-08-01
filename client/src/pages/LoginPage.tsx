@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Typography, Input } from "@material-tailwind/react";
+import { Typography } from "@material-tailwind/react";
+import { Input } from "../components/ui/Input";
 import { Button } from "../components/ui/Button";
 import { useForm, Controller } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
