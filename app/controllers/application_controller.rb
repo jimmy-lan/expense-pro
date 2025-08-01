@@ -1,15 +1,39 @@
 class ApplicationController < ActionController::API
   include ActionController::MimeResponds
-
-  def hello
-    render json: { message: "hello world!" }
-  end
+  include ActionController::Cookies
 
   def fallback_index_html
     render body: rails_blob_path, content_type: 'text/html'
   end
 
   private
+
+  def current_user
+    @current_user ||= begin
+      user_id = cookies.signed[:user_id]
+      User.find_by(id: user_id) if user_id
+    end
+  end
+
+  def authenticate_user!
+    return if current_user.present?
+
+    render json: { error: "Unauthorized" }, status: :unauthorized
+  end
+
+  def set_login_cookie(user)
+    cookies.signed[:user_id] = {
+      value: user.id,
+      httponly: true,
+      same_site: :lax,
+      secure: Rails.env.production?,
+      expires: 2.weeks.from_now
+    }
+  end
+
+  def clear_login_cookie
+    cookies.delete(:user_id, same_site: :lax)
+  end
 
   def rails_blob_path
     index_path = Rails.root.join('public', 'index.html')
