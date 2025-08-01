@@ -1,0 +1,16 @@
+[build]
+  builder = "dockerfile"
+  buildCommand = "docker build -t expense-share-app ."
+
+[deploy]
+  startCommand = "./start.sh"
+  healthcheckPath = "/health"
+  healthcheckTimeout = 300
+  restartPolicyType = "never"
+
+[environments]
+  [environments.production]
+    PORT = "3000"
+    RAILS_ENV = "production"
+    RACK_ENV = "production"
+    NODE_ENV = "production" 
