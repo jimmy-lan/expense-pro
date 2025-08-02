@@ -3,7 +3,7 @@ class ApplicationController < ActionController::API
   include ActionController::Cookies
 
   def fallback_index_html
-    render body: rails_blob_path, content_type: 'text/html'
+    render body: rails_blob_path, content_type: "text/html"
   end
 
   private
@@ -36,7 +36,7 @@ class ApplicationController < ActionController::API
   end
 
   def rails_blob_path
-    index_path = Rails.root.join('public', 'index.html')
+    index_path = Rails.root.join("public", "index.html")
     if index_path.exist?
       index_path.read
     else

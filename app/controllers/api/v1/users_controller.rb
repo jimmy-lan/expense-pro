@@ -31,4 +31,4 @@ class Api::V1::UsersController < ApplicationController
       lastName: user.last_name
     }
   end
-end 
+end

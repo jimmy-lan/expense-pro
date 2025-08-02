@@ -16,9 +16,9 @@ Rails.application.routes.draw do
   get "up" => "rails/health#show", as: :rails_health_check
 
   # Serve React app - catch all routes and serve index.html
-  get '*path', to: 'application#fallback_index_html', constraints: ->(request) do
+  get "*path", to: "application#fallback_index_html", constraints: ->(request) do
     !request.xhr? && request.format.html?
   end
 
-  root 'application#fallback_index_html'
+  root "application#fallback_index_html"
 end

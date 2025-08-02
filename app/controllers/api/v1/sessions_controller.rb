@@ -26,4 +26,4 @@ class Api::V1::SessionsController < ApplicationController
       lastName: user.last_name
     }
   end
-end 
+end
