@@ -113,12 +113,8 @@ const SignupPage: React.FC = () => {
                   label="First name"
                   error={!!errors.firstName}
                   autoComplete="given-name"
+                  helperText={errors.firstName?.message}
                 />
-                {errors.firstName && (
-                  <p className="mt-1 text-xs text-red-600">
-                    {errors.firstName.message}
-                  </p>
-                )}
               </div>
 
               <div>
@@ -127,12 +123,8 @@ const SignupPage: React.FC = () => {
                   label="Last name"
                   error={!!errors.lastName}
                   autoComplete="family-name"
+                  helperText={errors.lastName?.message}
                 />
-                {errors.lastName && (
-                  <p className="mt-1 text-xs text-red-600">
-                    {errors.lastName.message}
-                  </p>
-                )}
               </div>
 
               <div>
@@ -142,12 +134,8 @@ const SignupPage: React.FC = () => {
                   type="email"
                   error={!!errors.email}
                   autoComplete="email"
+                  helperText={errors.email?.message}
                 />
-                {errors.email && (
-                  <p className="mt-1 text-xs text-red-600">
-                    {errors.email.message}
-                  </p>
-                )}
               </div>
 
               <div>
@@ -157,12 +145,8 @@ const SignupPage: React.FC = () => {
                   type="password"
                   error={!!errors.password}
                   autoComplete="new-password"
+                  helperText={errors.password?.message}
                 />
-                {errors.password && (
-                  <p className="mt-1 text-xs text-red-600">
-                    {errors.password.message}
-                  </p>
-                )}
               </div>
 
               <div>
@@ -172,12 +156,8 @@ const SignupPage: React.FC = () => {
                   type="password"
                   error={!!errors.passwordConfirmation}
                   autoComplete="new-password"
+                  helperText={errors.passwordConfirmation?.message}
                 />
-                {errors.passwordConfirmation && (
-                  <p className="mt-1 text-xs text-red-600">
-                    {errors.passwordConfirmation.message}
-                  </p>
-                )}
               </div>
             </div>
 

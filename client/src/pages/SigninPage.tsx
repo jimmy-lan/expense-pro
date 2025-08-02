@@ -93,12 +93,8 @@ const SigninPage: React.FC = () => {
                 type="email"
                 error={!!errors.email}
                 autoComplete="email"
+                helperText={errors.email?.message}
               />
-              {errors.email && (
-                <p className="mt-1 text-xs text-red-600">
-                  {errors.email.message}
-                </p>
-              )}
             </div>
 
             <div>
@@ -108,12 +104,8 @@ const SigninPage: React.FC = () => {
                 type="password"
                 error={!!errors.password}
                 autoComplete="current-password"
+                helperText={errors.password?.message}
               />
-              {errors.password && (
-                <p className="mt-1 text-xs text-red-600">
-                  {errors.password.message}
-                </p>
-              )}
             </div>
 
             <Button type="submit" disabled={isSubmitting} fullWidth>
