@@ -22,6 +22,7 @@ export const Input = React.forwardRef<NativeMTInputRef, AppInputProps>(
       variant = "outlined",
       className,
       labelProps,
+      placeholder,
       ...rest
     },
     ref
@@ -38,6 +39,7 @@ export const Input = React.forwardRef<NativeMTInputRef, AppInputProps>(
         ref={ref}
         variant="standard"
         size={size}
+        placeholder={placeholder || " "}
         className={twMerge("!px-4 !border-none", className)}
         containerProps={{
           className:
@@ -45,7 +47,7 @@ export const Input = React.forwardRef<NativeMTInputRef, AppInputProps>(
         }}
         labelProps={{
           className:
-            "top-[-0.5rem] peer-focus:top-2 peer-focus:text-primary peer-focus:font-semibold left-4 after:border-none",
+            "top-[-0.5rem] peer-[:not(:placeholder-shown)]:top-2 peer-focus:top-2 peer-focus:text-primary font-semibold left-4 after:border-none",
           ...labelProps,
         }}
         {...passthroughProps}

@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Typography } from "@material-tailwind/react";
 import { Input } from "../components/ui/Input";
 import { Button } from "../components/ui/Button";
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import authPic from "../assets/images/auth-pic.jpg";
@@ -30,12 +30,12 @@ const defaultValues: LoginFormFields = {
   password: "",
 };
 
-const LoginPage: React.FC = () => {
+const SigninPage: React.FC = () => {
   const navigate = useNavigate();
   const [serverError, setServerError] = useState<string | null>(null);
 
   const {
-    control,
+    register,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<LoginFormFields>({
@@ -87,18 +87,12 @@ const LoginPage: React.FC = () => {
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div>
-              <Controller
-                name="email"
-                control={control}
-                render={({ field }) => (
-                  <Input
-                    {...field}
-                    label="Email"
-                    type="email"
-                    error={!!errors.email}
-                    autoComplete="email"
-                  />
-                )}
+              <Input
+                {...register("email")}
+                label="Email"
+                type="email"
+                error={!!errors.email}
+                autoComplete="email"
               />
               {errors.email && (
                 <p className="mt-1 text-xs text-red-600">
@@ -108,18 +102,12 @@ const LoginPage: React.FC = () => {
             </div>
 
             <div>
-              <Controller
-                name="password"
-                control={control}
-                render={({ field }) => (
-                  <Input
-                    {...field}
-                    label="Password"
-                    type="password"
-                    error={!!errors.password}
-                    autoComplete="current-password"
-                  />
-                )}
+              <Input
+                {...register("password")}
+                label="Password"
+                type="password"
+                error={!!errors.password}
+                autoComplete="current-password"
               />
               {errors.password && (
                 <p className="mt-1 text-xs text-red-600">
@@ -153,4 +141,4 @@ const LoginPage: React.FC = () => {
   );
 };
 
-export { LoginPage };
+export { SigninPage };

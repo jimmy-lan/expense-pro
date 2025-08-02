@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Typography } from "@material-tailwind/react";
 import { Input } from "../components/ui/Input";
 import { Button } from "../components/ui/Button";
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import authPic from "../assets/images/auth-pic.jpg";
@@ -47,7 +47,7 @@ const SignupPage: React.FC = () => {
   const [serverError, setServerError] = useState<string | null>(null);
 
   const {
-    control,
+    register,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<SignupFormFields>({
@@ -108,17 +108,11 @@ const SignupPage: React.FC = () => {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid grid-cols-1 gap-4">
               <div>
-                <Controller
-                  name="firstName"
-                  control={control}
-                  render={({ field }) => (
-                    <Input
-                      {...field}
-                      label="First name"
-                      error={!!errors.firstName}
-                      autoComplete="given-name"
-                    />
-                  )}
+                <Input
+                  {...register("firstName")}
+                  label="First name"
+                  error={!!errors.firstName}
+                  autoComplete="given-name"
                 />
                 {errors.firstName && (
                   <p className="mt-1 text-xs text-red-600">
@@ -128,17 +122,11 @@ const SignupPage: React.FC = () => {
               </div>
 
               <div>
-                <Controller
-                  name="lastName"
-                  control={control}
-                  render={({ field }) => (
-                    <Input
-                      {...field}
-                      label="Last name"
-                      error={!!errors.lastName}
-                      autoComplete="family-name"
-                    />
-                  )}
+                <Input
+                  {...register("lastName")}
+                  label="Last name"
+                  error={!!errors.lastName}
+                  autoComplete="family-name"
                 />
                 {errors.lastName && (
                   <p className="mt-1 text-xs text-red-600">
@@ -148,18 +136,12 @@ const SignupPage: React.FC = () => {
               </div>
 
               <div>
-                <Controller
-                  name="email"
-                  control={control}
-                  render={({ field }) => (
-                    <Input
-                      {...field}
-                      label="Email"
-                      type="email"
-                      error={!!errors.email}
-                      autoComplete="email"
-                    />
-                  )}
+                <Input
+                  {...register("email")}
+                  label="Email"
+                  type="email"
+                  error={!!errors.email}
+                  autoComplete="email"
                 />
                 {errors.email && (
                   <p className="mt-1 text-xs text-red-600">
@@ -169,18 +151,12 @@ const SignupPage: React.FC = () => {
               </div>
 
               <div>
-                <Controller
-                  name="password"
-                  control={control}
-                  render={({ field }) => (
-                    <Input
-                      {...field}
-                      label="Password"
-                      type="password"
-                      error={!!errors.password}
-                      autoComplete="new-password"
-                    />
-                  )}
+                <Input
+                  {...register("password")}
+                  label="Password"
+                  type="password"
+                  error={!!errors.password}
+                  autoComplete="new-password"
                 />
                 {errors.password && (
                   <p className="mt-1 text-xs text-red-600">
@@ -190,18 +166,12 @@ const SignupPage: React.FC = () => {
               </div>
 
               <div>
-                <Controller
-                  name="passwordConfirmation"
-                  control={control}
-                  render={({ field }) => (
-                    <Input
-                      {...field}
-                      label="Confirm password"
-                      type="password"
-                      error={!!errors.passwordConfirmation}
-                      autoComplete="new-password"
-                    />
-                  )}
+                <Input
+                  {...register("passwordConfirmation")}
+                  label="Confirm password"
+                  type="password"
+                  error={!!errors.passwordConfirmation}
+                  autoComplete="new-password"
                 />
                 {errors.passwordConfirmation && (
                   <p className="mt-1 text-xs text-red-600">
