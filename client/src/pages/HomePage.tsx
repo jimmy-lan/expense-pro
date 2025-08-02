@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Button, Typography } from "@material-tailwind/react";
+import { Typography } from "@material-tailwind/react";
+import { Button } from "../components/ui/Button";
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
@@ -14,9 +15,9 @@ const HomePage: React.FC = () => {
           Welcome to your expense sharing application
         </Typography>
         <div className="flex gap-3 justify-center mt-6">
-          <Button onClick={() => navigate("/login")}>Login</Button>
-          <Button color="gray" onClick={() => navigate("/signup")}>
-            Sign up
+          <Button onClick={() => navigate("/signup")}>Sign up</Button>
+          <Button variant="outlined" onClick={() => navigate("/login")}>
+            Sign in
           </Button>
         </div>
       </div>
