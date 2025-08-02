@@ -2,6 +2,7 @@ import React from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faGg } from "@fortawesome/free-brands-svg-icons";
 import { twMerge } from "tailwind-merge";
+import { SizeProp } from "@fortawesome/fontawesome-svg-core";
 
 export type LogoVariant = "icon" | "full";
 
@@ -10,6 +11,7 @@ export interface LogoProps {
   className?: string;
   iconClassName?: string;
   textClassName?: string;
+  iconSize?: SizeProp;
 }
 
 const Logo: React.FC<LogoProps> = ({
@@ -17,13 +19,16 @@ const Logo: React.FC<LogoProps> = ({
   className,
   iconClassName,
   textClassName,
+  iconSize,
 }) => {
   return (
-    <div className="flex items-center justify-center gap-2">
+    <div
+      className={twMerge("flex items-center justify-center gap-2", className)}
+    >
       <FontAwesomeIcon
         icon={faGg}
         className={twMerge("text-primary", iconClassName)}
-        size="lg"
+        size={iconSize || "lg"}
       />
       {variant === "full" && (
         <span
