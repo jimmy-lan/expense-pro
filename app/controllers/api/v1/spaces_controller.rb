@@ -11,7 +11,8 @@ class Api::V1::SpacesController < ApplicationController
     last_tx_expr = last_transaction_expr_sql
 
     scoped = base_scope
-      .select("spaces.*, (#{last_tx_expr}) AS last_transaction_at")
+      .select("spaces.*, (#{last_tx_expr}) AS last_transaction_at, my_membership.role AS current_user_role")
+      .joins("LEFT JOIN space_memberships AS my_membership ON my_membership.space_id = spaces.id AND my_membership.user_id = #{current_user.id}")
       .includes(:created_by)
 
     order_sql = <<~SQL.squish
@@ -107,11 +108,15 @@ class Api::V1::SpacesController < ApplicationController
   end
 
   def serialize_space(space)
+    creator_full_name = [space.created_by&.first_name, space.created_by&.last_name].compact.join(" ")
+    role = space.attributes["current_user_role"].presence || (space.created_by_id == current_user.id ? "admin" : nil)
+
     {
       id: space.id,
       name: space.name,
       createdAt: space.created_at,
-      createdById: space.created_by_id,
+      createdByName: creator_full_name,
+      role: role,
       transactionsCount: space.transactions_count,
       lastTransactionAt: space.attributes["last_transaction_at"]
     }

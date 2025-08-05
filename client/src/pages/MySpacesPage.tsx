@@ -39,7 +39,8 @@ interface SpaceDto {
   id: number;
   name: string;
   createdAt: string;
-  createdById: number;
+  createdByName: string;
+  role?: "member" | "admin" | null;
   transactionsCount: number;
   lastTransactionAt: string | null;
 }
@@ -63,11 +64,11 @@ const MENU_ITEMS: Array<{
 ];
 
 function formatLastActivity(ts: string | null): string {
-  if (!ts) return "last activity: --";
+  if (!ts) return "N/A";
   try {
-    return `last activity: ${dayjs(ts).fromNow()}`;
+    return dayjs(ts).fromNow();
   } catch {
-    return "last activity: --";
+    return "N/A";
   }
 }
 
@@ -165,6 +166,9 @@ const SpacesMenuList: React.FC<{
 };
 
 const SpaceCard: React.FC<{ space: SpaceDto }> = ({ space }) => {
+  const roleLabel = space.role
+    ? space.role.charAt(0).toUpperCase() + space.role.slice(1)
+    : "N/A";
   return (
     <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:shadow-md">
       <div className="min-w-0">
@@ -176,13 +180,37 @@ const SpaceCard: React.FC<{ space: SpaceDto }> = ({ space }) => {
             {space.name}
           </Typography>
           <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">
-            {space.transactionsCount} tx
+            {space.transactionsCount} transactions
           </span>
         </div>
-        <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-600">
-          <span>creator id: {space.createdById}</span>
-          <span className="hidden text-gray-300 md:inline">•</span>
-          <span>{formatLastActivity(space.lastTransactionAt)}</span>
+        <div className="mt-1 grid grid-cols-1 gap-y-1 text-sm text-gray-600 md:grid-cols-3 md:gap-x-4">
+          <span>
+            <span className="text-gray-700">Space Owner:</span>{" "}
+            <span className="font-medium text-gray-800">
+              {space.createdByName || "--"}
+            </span>
+          </span>
+          <span>
+            <span className="text-gray-700">Your Role:</span>{" "}
+            <span
+              className={twMerge(
+                "rounded px-1.5 py-0.5 text-xs font-medium",
+                space.role === "admin"
+                  ? "bg-secondary/10 text-primary"
+                  : space.role === "member"
+                  ? "bg-gray-100 text-gray-800"
+                  : "bg-gray-50 text-gray-500"
+              )}
+            >
+              {roleLabel}
+            </span>
+          </span>
+          <span>
+            <span className="text-gray-700">Last Activity:</span>{" "}
+            <span className="font-medium text-gray-800">
+              {formatLastActivity(space.lastTransactionAt)}
+            </span>
+          </span>
         </div>
       </div>
       <Tooltip content="Open">
@@ -353,10 +381,7 @@ const MySpacesPage: React.FC = () => {
           ) : (
             <div className="space-y-3">
               {spaces.map((space) => (
-                <SpaceCard
-                  key={`${space.id}-${space.createdById}`}
-                  space={space}
-                />
+                <SpaceCard key={space.id} space={space} />
               ))}
             </div>
           )}
