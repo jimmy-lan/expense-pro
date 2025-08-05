@@ -45,7 +45,15 @@ COPY . .
 # Precompile bootsnap code for faster boot times
 RUN bundle exec bootsnap precompile app/ lib/
 
-
+# Build React client in a separate Node stage
+FROM node:20-bookworm AS client-build
+WORKDIR /app
+# Only copy package manifests first for better layer caching
+COPY client/package*.json ./client/
+RUN cd client && npm ci --no-audit --silent
+# Now copy the rest of the client source and build
+COPY client ./client
+RUN cd client && CI=true npm run build --silent
 
 
 # Final stage for app image
@@ -54,6 +62,8 @@ FROM base
 # Copy built artifacts: gems, application
 COPY --from=build "${BUNDLE_PATH}" "${BUNDLE_PATH}"
 COPY --from=build /rails /rails
+# Copy the built React app into Rails public directory
+COPY --from=client-build /app/client/build /rails/public
 
 # Run and own only the runtime files as a non-root user for security
 RUN groupadd --system --gid 1000 rails && \
