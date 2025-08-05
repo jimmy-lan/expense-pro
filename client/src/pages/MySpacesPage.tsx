@@ -7,6 +7,9 @@ import {
   List,
   ListItem,
   ListItemPrefix,
+  Menu,
+  MenuHandler,
+  MenuList,
 } from "@material-tailwind/react";
 import { useNavigate } from "react-router-dom";
 import { twMerge } from "tailwind-merge";
@@ -23,6 +26,7 @@ import {
   faUsers,
   faRightFromBracket,
   faBorderNone,
+  faChevronDown,
 } from "@fortawesome/free-solid-svg-icons";
 import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import { useUserInfo } from "../hooks";
@@ -102,6 +106,64 @@ const EmptyState: React.FC<{
   </div>
 );
 
+// Reusable spaces filter menu list (used in sidebar and mobile dropdown)
+const SpacesMenuList: React.FC<{
+  selected: SpacesFilter;
+  onSelect: (value: SpacesFilter) => void;
+  onItemSelected?: () => void;
+  className?: string;
+}> = ({ selected, onSelect, onItemSelected, className }) => {
+  return (
+    <List
+      className={twMerge(
+        "rounded-xl border border-gray-200 bg-white p-2 shadow-sm",
+        className
+      )}
+    >
+      {MENU_ITEMS.map((item) => {
+        const isActive = item.key === selected;
+        return (
+          <ListItem
+            key={item.key}
+            onClick={() => {
+              onSelect(item.key);
+              onItemSelected?.();
+            }}
+            className={twMerge(
+              "group relative flex items-center gap-3 rounded-lg px-3 py-3 text-gray-800",
+              "transition-all",
+              isActive
+                ? "bg-secondary/10 hover:bg-secondary/15 focus:bg-secondary/10 shadow-sm before:absolute before:left-0 before:top-0 before:h-full before:w-1.5 before:bg-secondary"
+                : "hover:bg-secondary/5"
+            )}
+          >
+            <ListItemPrefix>
+              <span
+                className={twMerge(
+                  "grid h-8 w-8 place-items-center rounded-md",
+                  isActive
+                    ? "bg-white/2 bg-secondary/5 text-secondary"
+                    : "bg-gray-100 text-gray-700 group-hover:bg-secondary/10 group-hover:text-secondary"
+                )}
+              >
+                <FontAwesomeIcon icon={item.icon} />
+              </span>
+            </ListItemPrefix>
+            <span
+              className={twMerge(
+                "font-medium",
+                isActive ? "text-gray-900" : "text-gray-800"
+              )}
+            >
+              {item.label}
+            </span>
+          </ListItem>
+        );
+      })}
+    </List>
+  );
+};
+
 const SpaceCard: React.FC<{ space: SpaceDto }> = ({ space }) => {
   return (
     <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:shadow-md">
@@ -142,6 +204,8 @@ const MySpacesPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [cursor, setCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
+
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const headerTitle = useMemo(
     () => MENU_ITEMS.find((m) => m.key === selected)?.label || "My Spaces",
@@ -227,57 +291,46 @@ const MySpacesPage: React.FC = () => {
 
       {/* Content */}
       <div className="mx-auto grid grid-cols-1 gap-12 2xl:gap-16 px-4 py-6 md:grid-cols-12 md:px-8 lg:px-12 2xl:px-16">
-        {/* Left sticky menu */}
-        <aside className="md:col-span-5 lg:col-span-4 xl:col-span-3">
+        {/* Left sticky menu (hidden on mobile) */}
+        <aside className="hidden md:block md:col-span-5 lg:col-span-4 xl:col-span-3">
           <div className="sticky top-24 mt-2">
-            <List className="rounded-xl border border-gray-200 bg-white p-2 shadow-sm">
-              {MENU_ITEMS.map((item) => {
-                const isActive = item.key === selected;
-                return (
-                  <ListItem
-                    key={item.key}
-                    onClick={() => setSelected(item.key)}
-                    className={twMerge(
-                      "group relative flex items-center gap-3 rounded-lg px-3 py-3 text-gray-800",
-                      "transition-all",
-                      isActive
-                        ? "bg-secondary/10 hover:bg-secondary/15 focus:bg-secondary/10 shadow-sm before:absolute before:left-0 before:top-0 before:h-full before:w-1.5 before:bg-secondary"
-                        : "hover:bg-secondary/5"
-                    )}
-                  >
-                    <ListItemPrefix>
-                      <span
-                        className={twMerge(
-                          "grid h-8 w-8 place-items-center rounded-md",
-                          isActive
-                            ? "bg-white/2 bg-secondary/5 text-secondary"
-                            : "bg-gray-100 text-gray-700 group-hover:bg-secondary/10 group-hover:text-secondary"
-                        )}
-                      >
-                        <FontAwesomeIcon icon={item.icon} />
-                      </span>
-                    </ListItemPrefix>
-                    <span
-                      className={twMerge(
-                        "font-medium",
-                        isActive ? "text-gray-900" : "text-gray-800"
-                      )}
-                    >
-                      {item.label}
-                    </span>
-                  </ListItem>
-                );
-              })}
-            </List>
+            <SpacesMenuList selected={selected} onSelect={setSelected} />
           </div>
         </aside>
 
         {/* Right list */}
         <main className="md:col-span-7 lg:col-span-8 xl:col-span-9">
           <div className="mb-4 mt-2">
-            <Typography variant="h4" className="font-bold text-gray-900">
-              {headerTitle}
-            </Typography>
+            <div className="flex items-center gap-2">
+              <Typography variant="h4" className="font-bold text-gray-900">
+                {headerTitle}
+              </Typography>
+              {/* Mobile menu trigger */}
+              <Menu open={isMobileMenuOpen} handler={setIsMobileMenuOpen}>
+                <MenuHandler>
+                  <IconButton
+                    className="md:hidden rounded-full bg-gray-100 text-gray-900 shadow-none hover:bg-gray-200"
+                    aria-label="Change view"
+                  >
+                    <FontAwesomeIcon
+                      icon={faChevronDown}
+                      rotation={isMobileMenuOpen ? 180 : undefined}
+                      className="transition-transform duration-300"
+                    />
+                  </IconButton>
+                </MenuHandler>
+                <MenuList className="p-2">
+                  <div className="min-w-[240px]">
+                    <SpacesMenuList
+                      selected={selected}
+                      onSelect={setSelected}
+                      onItemSelected={() => setIsMobileMenuOpen(false)}
+                      className="border-0 shadow-none p-0"
+                    />
+                  </div>
+                </MenuList>
+              </Menu>
+            </div>
             <Typography variant="small" className="mt-1 text-gray-600">
               Manage and review your expense spaces
             </Typography>
