@@ -59,7 +59,7 @@ const SigninPage: React.FC = () => {
       }
       const data = await res.json();
       localStorage.setItem("user", JSON.stringify((data as any).user));
-      navigate("/");
+      navigate("/my");
     } catch (err: any) {
       setServerError(err.message || "Something went wrong");
     }
