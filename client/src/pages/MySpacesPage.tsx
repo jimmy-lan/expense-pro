@@ -22,6 +22,7 @@ import {
   faUser,
   faUsers,
   faRightFromBracket,
+  faBorderNone,
 } from "@fortawesome/free-solid-svg-icons";
 import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import { useUserInfo } from "../hooks";
@@ -71,8 +72,14 @@ const EmptyState: React.FC<{
   subtitle?: string;
   onRefresh?: () => void;
   loading?: boolean;
-}> = ({ title, subtitle, onRefresh, loading }) => (
+  icon?: IconDefinition;
+}> = ({ title, subtitle, onRefresh, loading, icon }) => (
   <div className="flex flex-col items-center justify-center rounded-xl border border-gray-200 bg-white p-10 text-center shadow-sm">
+    {icon && (
+      <div className="mb-4">
+        <FontAwesomeIcon icon={icon} className="text-secondary text-6xl" />
+      </div>
+    )}
     <Typography variant="h5" className="font-semibold text-gray-900">
       {title}
     </Typography>
@@ -288,6 +295,7 @@ const MySpacesPage: React.FC = () => {
               subtitle="Create a space from the app to get started."
               onRefresh={() => loadSpaces({ reset: true })}
               loading={loading}
+              icon={faBorderNone}
             />
           ) : (
             <div className="space-y-3">
