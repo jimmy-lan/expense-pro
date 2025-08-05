@@ -6,4 +6,4 @@ class Plan < ApplicationRecord
   validates :max_spaces, presence: true, numericality: { only_integer: true, greater_than: 0 }
   validates :max_transactions_per_space, presence: true, numericality: { only_integer: true, greater_than: 0 }
   validates :expires_after_days, numericality: { only_integer: true, greater_than: 0 }, allow_nil: true
-end 
+end

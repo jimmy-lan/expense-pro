@@ -45,4 +45,4 @@ class AddPlanToUsersAndCounters < ActiveRecord::Migration[8.0]
     remove_column :users, :created_spaces_count
     remove_reference :users, :plan, foreign_key: true
   end
-end 
+end

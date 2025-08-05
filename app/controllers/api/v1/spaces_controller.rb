@@ -3,7 +3,7 @@ class Api::V1::SpacesController < ApplicationController
 
   def index
     filter = params[:filter].to_s.presence || "all"
-    limit = [[params[:limit].to_i, 0].max, 50].min rescue 20
+    limit = [ [ params[:limit].to_i, 0 ].max, 50 ].min rescue 20
     limit = 20 if limit.zero?
 
     base_scope = spaces_scope_for_filter(filter)
@@ -81,11 +81,11 @@ class Api::V1::SpacesController < ApplicationController
     if last_tx_at.present?
       # Compare on computed expression directly; avoid relying on SELECT alias in WHERE
       conditions << "((#{last_tx_expr}) < ? OR ((#{last_tx_expr}) = ? AND spaces.name > ?) OR ((#{last_tx_expr}) = ? AND spaces.name = ? AND spaces.created_by_id > ?) OR ((#{last_tx_expr}) = ? AND spaces.name = ? AND spaces.created_by_id = ? AND spaces.id > ?))"
-      values += [last_tx_at, last_tx_at, name, last_tx_at, name, created_by_id, last_tx_at, name, created_by_id, id]
+      values += [ last_tx_at, last_tx_at, name, last_tx_at, name, created_by_id, last_tx_at, name, created_by_id, id ]
     else
       # Continue among NULL last_tx only (NULLS LAST)
       conditions << "((#{last_tx_expr}) IS NULL AND (spaces.name > ? OR (spaces.name = ? AND spaces.created_by_id > ?) OR (spaces.name = ? AND spaces.created_by_id = ? AND spaces.id > ?)))"
-      values += [name, name, created_by_id, name, created_by_id, id]
+      values += [ name, name, created_by_id, name, created_by_id, id ]
     end
 
     scope.where(conditions.join(" AND "), *values)
@@ -108,7 +108,7 @@ class Api::V1::SpacesController < ApplicationController
   end
 
   def serialize_space(space)
-    creator_full_name = [space.created_by&.first_name, space.created_by&.last_name].compact.join(" ")
+    creator_full_name = [ space.created_by&.first_name, space.created_by&.last_name ].compact.join(" ")
     role = space.attributes["current_user_role"].presence || (space.created_by_id == current_user.id ? "admin" : nil)
 
     {
@@ -121,4 +121,4 @@ class Api::V1::SpacesController < ApplicationController
       lastTransactionAt: space.attributes["last_transaction_at"]
     }
   end
-end 
+end

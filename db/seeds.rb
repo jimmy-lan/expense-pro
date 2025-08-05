@@ -46,12 +46,12 @@ u3.last_name = "3"
 u3.plan ||= regular
 u3.save!
 
-["u1 Space 1", "u1 Space 2", "u1 Space 3", "u1 Space 4", "u1 Space 5", "u1 Space 6", "u1 Space 7", "u1 Space 8", "u1 Space 9", "u1 Space 10", "u1 Space 11", "u1 Space 12", "u1 Space 13", "u1 Space 14", "u1 Space 15", "u1 Space 16", "u1 Space 17", "u1 Space 18", "u1 Space 19", "u1 Space 20"].each do |name|
+[ "u1 Space 1", "u1 Space 2", "u1 Space 3", "u1 Space 4", "u1 Space 5", "u1 Space 6", "u1 Space 7", "u1 Space 8", "u1 Space 9", "u1 Space 10", "u1 Space 11", "u1 Space 12", "u1 Space 13", "u1 Space 14", "u1 Space 15", "u1 Space 16", "u1 Space 17", "u1 Space 18", "u1 Space 19", "u1 Space 20" ].each do |name|
     space = Space.find_or_create_by!(name: name, created_by: u1)
     SpaceMembership.find_or_create_by!(user: u1, space: space, role: "admin")
 end
 
-["u3 Space 1", "u3 Space 2", "u3 Space 3", "u3 Space 4", "u3 Space 5", "u3 Space 6", "u3 Space 7", "u3 Space 8", "u3 Space 9", "u3 Space 10", "u3 Space 11", "u3 Space 12", "u3 Space 13", "u3 Space 14", "u3 Space 15", "u3 Space 16", "u3 Space 17", "u3 Space 18", "u3 Space 19", "u3 Space 20"].each do |name|
+[ "u3 Space 1", "u3 Space 2", "u3 Space 3", "u3 Space 4", "u3 Space 5", "u3 Space 6", "u3 Space 7", "u3 Space 8", "u3 Space 9", "u3 Space 10", "u3 Space 11", "u3 Space 12", "u3 Space 13", "u3 Space 14", "u3 Space 15", "u3 Space 16", "u3 Space 17", "u3 Space 18", "u3 Space 19", "u3 Space 20" ].each do |name|
     space = Space.find_or_create_by!(name: name, created_by: u3)
     SpaceMembership.find_or_create_by!(user: u3, space: space, role: "admin")
 end
