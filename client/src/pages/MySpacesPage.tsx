@@ -196,7 +196,7 @@ const SpaceCard: React.FC<{ space: SpaceDto }> = ({ space }) => {
               className={twMerge(
                 "rounded px-1.5 py-0.5 text-xs font-medium",
                 space.role === "admin"
-                  ? "bg-secondary/10 text-primary"
+                  ? "bg-primary/10 text-primary"
                   : space.role === "member"
                   ? "bg-gray-100 text-gray-800"
                   : "bg-gray-50 text-gray-500"
