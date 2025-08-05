@@ -3,6 +3,8 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faGg } from "@fortawesome/free-brands-svg-icons";
 import { twMerge } from "tailwind-merge";
 import { SizeProp } from "@fortawesome/fontawesome-svg-core";
+import { useNavigate } from "react-router-dom";
+import { useBreakpoint } from "../hooks/useBreakpoint";
 
 export type LogoVariant = "icon" | "full";
 
@@ -21,9 +23,21 @@ const Logo: React.FC<LogoProps> = ({
   textClassName,
   iconSize,
 }) => {
+  const isMobile = useBreakpoint("sm");
+  const navigate = useNavigate();
+  const handleLogoClick = () => {
+    if (!isMobile) {
+      navigate("/");
+    }
+  };
+
   return (
     <div
-      className={twMerge("flex items-center justify-center gap-2", className)}
+      onClick={handleLogoClick}
+      className={twMerge(
+        "flex items-center justify-center gap-2 cursor-pointer",
+        className
+      )}
     >
       <FontAwesomeIcon
         icon={faGg}
