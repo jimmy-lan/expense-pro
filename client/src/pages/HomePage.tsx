@@ -1,46 +1,12 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Typography } from "@material-tailwind/react";
 import { Button } from "../components/ui/Button";
-
-interface StoredUser {
-  first_name?: string;
-  last_name?: string;
-  firstName?: string;
-  lastName?: string;
-  email?: string;
-}
+import { useUserInfo } from "../hooks";
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
-  const [user, setUser] = useState<StoredUser | null>(null);
-
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem("user");
-      if (raw) {
-        const parsed: StoredUser = JSON.parse(raw);
-        setUser(parsed);
-      }
-    } catch (_) {
-      setUser(null);
-    }
-  }, []);
-
-  const handleSignOut = async () => {
-    try {
-      await fetch("/api/v1/logout", {
-        method: "DELETE",
-        credentials: "include",
-      });
-    } catch (_) {
-      // ignore network errors; proceed to clear local state
-    } finally {
-      localStorage.removeItem("user");
-      setUser(null);
-      navigate("/");
-    }
-  };
+  const { user, logout } = useUserInfo();
 
   const firstName = user?.first_name || user?.firstName || "";
   const lastName = user?.last_name || user?.lastName || "";
@@ -81,7 +47,7 @@ const HomePage: React.FC = () => {
             )}
             <div className="flex gap-3 justify-center mt-6">
               <Button onClick={() => navigate("/my")}>My spaces</Button>
-              <Button variant="outlined" onClick={handleSignOut}>
+              <Button variant="outlined" onClick={() => logout()}>
                 Sign out
               </Button>
             </div>
