@@ -20,8 +20,4 @@ bundle install
 bundle exec rails db:migrate
 
 echo "Starting Rails server..."
-if [ -z "${SECRET_KEY_BASE:-}" ]; then
-  echo "ERROR: SECRET_KEY_BASE is not set"
-  exit 1
-fi
-bundle exec rails server -b 0.0.0.0 -p ${PORT:-3001} 
+bundle exec rails server -b 0.0.0.0 -p ${PORT}
