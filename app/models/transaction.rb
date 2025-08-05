@@ -1,5 +1,5 @@
 class Transaction < ApplicationRecord
-  belongs_to :space
+  belongs_to :space, counter_cache: true
   belongs_to :creator, class_name: "User"
 
   DECIMAL_STRING_REGEX = /\A\d+(?:\.\d{1,2})?\z/

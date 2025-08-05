@@ -8,11 +8,26 @@
 #     MovieGenre.find_or_create_by!(name: genre_name)
 #   end
 
+regular = Plan.find_or_create_by!(key: "regular") do |p|
+  p.name = "Regular"
+  p.max_spaces = 20
+  p.max_transactions_per_space = 500
+  p.expires_after_days = 60
+end
+
+premium = Plan.find_or_create_by!(key: "premium") do |p|
+  p.name = "Premium"
+  p.max_spaces = 50
+  p.max_transactions_per_space = 10_000
+  p.expires_after_days = nil
+end
+
 u1 = User.find_or_initialize_by(email: "user1.test@example.com")
 u1.password = "secret_test"
 u1.password_confirmation = "secret_test"
 u1.first_name = "User"
 u1.last_name = "1"
+u1.plan ||= regular
 u1.save!
 
 u2 = User.find_or_initialize_by(email: "user2.test@example.com")
@@ -20,6 +35,7 @@ u2.password = "secret_test"
 u2.password_confirmation = "secret_test"
 u2.first_name = "User"
 u2.last_name = "2"
+u2.plan ||= regular
 u2.save!
 
 u3 = User.find_or_initialize_by(email: "user3.test@example.com")
@@ -27,6 +43,7 @@ u3.password = "secret_test"
 u3.password_confirmation = "secret_test"
 u3.first_name = "User"
 u3.last_name = "3"
+u3.plan ||= regular
 u3.save!
 
 ["u1 Space 1", "u1 Space 2", "u1 Space 3"].each do |name|

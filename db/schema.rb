@@ -10,9 +10,22 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_08_08_051959) do
+ActiveRecord::Schema[8.0].define(version: 2025_08_09_060500) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "plans", force: :cascade do |t|
+    t.string "key", null: false
+    t.string "name", null: false
+    t.integer "max_spaces", default: 20, null: false
+    t.integer "max_transactions_per_space", default: 500, null: false
+    t.integer "expires_after_days"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["key"], name: "index_plans_on_key", unique: true
+    t.check_constraint "max_spaces > 0", name: "plans_max_spaces_positive"
+    t.check_constraint "max_transactions_per_space > 0", name: "plans_max_tx_positive"
+  end
 
   create_table "space_memberships", force: :cascade do |t|
     t.bigint "user_id", null: false
@@ -24,7 +37,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_08_051959) do
     t.index ["space_id"], name: "index_space_memberships_on_space_id"
     t.index ["user_id", "space_id"], name: "index_space_memberships_on_user_and_space", unique: true
     t.index ["user_id"], name: "index_space_memberships_on_user_id"
-    t.check_constraint "role::text = ANY (ARRAY['member'::character varying, 'admin'::character varying]::text[])", name: "space_memberships_role_allowed"
+    t.check_constraint "role::text = ANY (ARRAY['member'::character varying::text, 'admin'::character varying::text])", name: "space_memberships_role_allowed"
   end
 
   create_table "spaces", force: :cascade do |t|
@@ -32,6 +45,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_08_051959) do
     t.bigint "created_by_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "transactions_count", default: 0, null: false
     t.index ["created_by_id"], name: "index_spaces_on_created_by_id"
   end
 
@@ -45,6 +59,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_08_051959) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["creator_id"], name: "index_transactions_on_creator_id"
+    t.index ["space_id", "created_at"], name: "index_transactions_on_space_and_created_at"
+    t.index ["space_id", "occurred_at", "id"], name: "index_transactions_on_space_and_occurred_at_and_id"
     t.index ["space_id", "occurred_at"], name: "index_transactions_on_space_and_occurred_at"
     t.index ["space_id"], name: "index_transactions_on_space_id"
     t.check_constraint "amount::text ~ '^[0-9]+(\\.[0-9]{1,2})?$'::text", name: "transactions_amount_decimal_string"
@@ -57,7 +73,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_08_051959) do
     t.string "password_digest"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "plan_id", null: false
+    t.integer "created_spaces_count", default: 0, null: false
     t.index "lower((email)::text)", name: "index_users_on_lower_email", unique: true
+    t.index ["plan_id"], name: "index_users_on_plan_id"
   end
 
   add_foreign_key "space_memberships", "spaces"
@@ -65,4 +84,5 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_08_051959) do
   add_foreign_key "spaces", "users", column: "created_by_id"
   add_foreign_key "transactions", "spaces"
   add_foreign_key "transactions", "users", column: "creator_id"
+  add_foreign_key "users", "plans"
 end
