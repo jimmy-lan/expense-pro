@@ -1,10 +1,15 @@
 #!/bin/bash
-set -e
+set -Eeuo pipefail
+
+export NODE_ENV=${NODE_ENV:-production}
+export RAILS_ENV=${RAILS_ENV:-production}
+export BUNDLE_WITHOUT=${BUNDLE_WITHOUT:-"development:test"}
+export RAILS_LOG_TO_STDOUT=${RAILS_LOG_TO_STDOUT:-true}
 
 echo "Building React frontend..."
 cd client
-npm install
-npm run build
+npm ci --no-audit --silent --omit=dev
+CI=true npm run build --silent
 
 echo "Copying React build to Rails public directory..."
 cp -r build/* ../public/
@@ -12,7 +17,11 @@ cd ..
 
 echo "Setting up Rails..."
 bundle install
-bundle exec rails db:prepare
+bundle exec rails db:migrate
 
 echo "Starting Rails server..."
-bundle exec rails server -b 0.0.0.0 -p ${PORT:-3000} 
+if [ -z "${SECRET_KEY_BASE:-}" ]; then
+  echo "ERROR: SECRET_KEY_BASE is not set"
+  exit 1
+fi
+bundle exec rails server -b 0.0.0.0 -p ${PORT:-3001} 
