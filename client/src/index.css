@@ -10,17 +10,3 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-
-@media (min-width: 768px) {
-  /* Reserve space for the vertical scrollbar on desktop to prevent layout shift */
-  html {
-    scrollbar-gutter: stable;
-  }
-
-  /* Fallback for browsers without scrollbar-gutter support */
-  @supports not (scrollbar-gutter: stable) {
-    html {
-      overflow-y: scroll;
-    }
-  }
-}
