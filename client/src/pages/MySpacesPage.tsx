@@ -283,7 +283,7 @@ const MySpacesPage: React.FC = () => {
 
   useEffect(() => {
     loadSpaces({ reset: true });
-  }, [selected]);
+  }, [selected, loadSpaces]);
 
   return (
     <div className="min-h-screen bg-gray-50">
