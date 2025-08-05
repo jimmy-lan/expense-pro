@@ -12,7 +12,10 @@ class Api::V1::SpacesController < ApplicationController
 
     scoped = base_scope
       .select("spaces.*, (#{last_tx_expr}) AS last_transaction_at, my_membership.role AS current_user_role")
-      .joins("LEFT JOIN space_memberships AS my_membership ON my_membership.space_id = spaces.id AND my_membership.user_id = #{current_user.id}")
+      .joins(ActiveRecord::Base.send(:sanitize_sql_array, [
+        "LEFT JOIN space_memberships AS my_membership ON my_membership.space_id = spaces.id AND my_membership.user_id = ?",
+        current_user.id
+      ]))
       .includes(:created_by)
 
     order_sql = <<~SQL.squish
@@ -75,20 +78,32 @@ class Api::V1::SpacesController < ApplicationController
     created_by_id = cursor["created_by_id"]
     id = cursor["id"]
 
-    conditions = []
-    values = []
+    expr_sql = "(#{last_tx_expr})"
 
     if last_tx_at.present?
-      # Compare on computed expression directly; avoid relying on SELECT alias in WHERE
-      conditions << "((#{last_tx_expr}) < ? OR ((#{last_tx_expr}) = ? AND spaces.name > ?) OR ((#{last_tx_expr}) = ? AND spaces.name = ? AND spaces.created_by_id > ?) OR ((#{last_tx_expr}) = ? AND spaces.name = ? AND spaces.created_by_id = ? AND spaces.id > ?))"
-      values += [ last_tx_at, last_tx_at, name, last_tx_at, name, created_by_id, last_tx_at, name, created_by_id, id ]
+      predicate = ActiveRecord::Base.send(:sanitize_sql_array, [
+        <<~SQL.squish,
+          ((#{expr_sql}) < ?
+            OR ((#{expr_sql}) = ? AND spaces.name > ?)
+            OR ((#{expr_sql}) = ? AND spaces.name = ? AND spaces.created_by_id > ?)
+            OR ((#{expr_sql}) = ? AND spaces.name = ? AND spaces.created_by_id = ? AND spaces.id > ?))
+        SQL
+        last_tx_at, last_tx_at, name, last_tx_at, name, created_by_id, last_tx_at, name, created_by_id, id
+      ])
     else
-      # Continue among NULL last_tx only (NULLS LAST)
-      conditions << "((#{last_tx_expr}) IS NULL AND (spaces.name > ? OR (spaces.name = ? AND spaces.created_by_id > ?) OR (spaces.name = ? AND spaces.created_by_id = ? AND spaces.id > ?)))"
-      values += [ name, name, created_by_id, name, created_by_id, id ]
+      predicate = ActiveRecord::Base.send(:sanitize_sql_array, [
+        <<~SQL.squish,
+          ((#{expr_sql}) IS NULL AND (
+            spaces.name > ?
+            OR (spaces.name = ? AND spaces.created_by_id > ?)
+            OR (spaces.name = ? AND spaces.created_by_id = ? AND spaces.id > ?)
+          ))
+        SQL
+        name, name, created_by_id, name, created_by_id, id
+      ])
     end
 
-    scope.where(conditions.join(" AND "), *values)
+    scope.where(predicate)
   end
 
   def encode_cursor(space)
