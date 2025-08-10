@@ -13,23 +13,21 @@ import {
 } from "@material-tailwind/react";
 import { useNavigate } from "react-router-dom";
 import { twMerge } from "tailwind-merge";
-import { Logo } from "../components/Logo";
+import { AppNavbar } from "../components";
 import { Button } from "../components/ui/Button";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faArrowRotateRight,
   faArrowUpRightFromSquare,
   faLayerGroup,
   faUser,
   faUsers,
-  faRightFromBracket,
   faBorderNone,
   faChevronDown,
+  faPlus,
 } from "@fortawesome/free-solid-svg-icons";
 import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
-import { useUserInfo } from "../hooks";
 import type { SpaceDto, SpacesFilter } from "../lib/api";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { spacesApi } from "../lib/api";
@@ -207,7 +205,6 @@ const SpaceCard: React.FC<{ space: SpaceDto }> = ({ space }) => {
 
 const MySpacesPage: React.FC = () => {
   const navigate = useNavigate();
-  const { logout } = useUserInfo();
 
   const [selected, setSelected] = useState<SpacesFilter>("all");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -242,35 +239,7 @@ const MySpacesPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="sticky top-0 z-10 border-b border-gray-200 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/60">
-        <div className="mx-auto flex items-center gap-4 px-4 py-3 md:px-6">
-          <Logo className="justify-start" />
-          <div className="ml-auto flex items-center gap-2">
-            <Tooltip content="Reload">
-              <IconButton
-                onClick={() => refresh()}
-                disabled={spacesQuery.isFetching}
-                className="rounded-full bg-gray-100 text-gray-900 shadow-none hover:bg-gray-200"
-              >
-                {spacesQuery.isFetching ? (
-                  <Spinner className="h-4 w-4" />
-                ) : (
-                  <FontAwesomeIcon icon={faArrowRotateRight} />
-                )}
-              </IconButton>
-            </Tooltip>
-            <Tooltip content="Sign out">
-              <IconButton
-                onClick={() => logout()}
-                className="rounded-full bg-gray-100 text-gray-900 shadow-none hover:bg-gray-200"
-              >
-                <FontAwesomeIcon icon={faRightFromBracket} />
-              </IconButton>
-            </Tooltip>
-          </div>
-        </div>
-      </div>
+      <AppNavbar />
 
       {/* Content */}
       <div className="mx-auto grid grid-cols-1 gap-12 2xl:gap-16 px-4 py-6 md:grid-cols-12 md:px-8 lg:px-12 2xl:px-16">
@@ -283,40 +252,52 @@ const MySpacesPage: React.FC = () => {
 
         {/* Right list */}
         <main className="md:col-span-7 lg:col-span-8 xl:col-span-9">
-          <div className="mb-4 mt-2">
-            <div className="flex items-center gap-2">
-              <Typography variant="h4" className="font-bold text-gray-900">
-                {headerTitle}
+          <div className="flex justify-start md:justify-between flex-col md:flex-row">
+            <div className="mb-4 mt-2">
+              <div className="flex items-center gap-2">
+                <Typography variant="h4" className="font-bold text-gray-900">
+                  {headerTitle}
+                </Typography>
+                {/* Mobile menu trigger */}
+                <Menu open={isMobileMenuOpen} handler={setIsMobileMenuOpen}>
+                  <MenuHandler>
+                    <IconButton
+                      className="md:hidden rounded-full bg-gray-100 text-gray-900 shadow-none hover:bg-gray-200"
+                      aria-label="Change view"
+                    >
+                      {spacesQuery.isFetching ? (
+                        <Spinner className="h-4 w-4" />
+                      ) : (
+                        <FontAwesomeIcon
+                          icon={faChevronDown}
+                          rotation={isMobileMenuOpen ? 180 : undefined}
+                          className="transition-transform duration-300"
+                        />
+                      )}
+                    </IconButton>
+                  </MenuHandler>
+                  <MenuList className="p-2">
+                    <div className="min-w-[240px]">
+                      <SpacesMenuList
+                        selected={selected}
+                        onSelect={setSelected}
+                        onItemSelected={() => setIsMobileMenuOpen(false)}
+                        className="border-0 shadow-none p-0"
+                      />
+                    </div>
+                  </MenuList>
+                </Menu>
+              </div>
+              <Typography variant="small" className="mt-1 text-gray-600">
+                Manage and review your expense spaces
               </Typography>
-              {/* Mobile menu trigger */}
-              <Menu open={isMobileMenuOpen} handler={setIsMobileMenuOpen}>
-                <MenuHandler>
-                  <IconButton
-                    className="md:hidden rounded-full bg-gray-100 text-gray-900 shadow-none hover:bg-gray-200"
-                    aria-label="Change view"
-                  >
-                    <FontAwesomeIcon
-                      icon={faChevronDown}
-                      rotation={isMobileMenuOpen ? 180 : undefined}
-                      className="transition-transform duration-300"
-                    />
-                  </IconButton>
-                </MenuHandler>
-                <MenuList className="p-2">
-                  <div className="min-w-[240px]">
-                    <SpacesMenuList
-                      selected={selected}
-                      onSelect={setSelected}
-                      onItemSelected={() => setIsMobileMenuOpen(false)}
-                      className="border-0 shadow-none p-0"
-                    />
-                  </div>
-                </MenuList>
-              </Menu>
             </div>
-            <Typography variant="small" className="mt-1 text-gray-600">
-              Manage and review your expense spaces
-            </Typography>
+            <div className="mb-4 flex md:items-center md:justify-center">
+              <Button size="md" variant="outlined" fullWidth>
+                <FontAwesomeIcon icon={faPlus} className="mr-2" />
+                New Space
+              </Button>
+            </div>
           </div>
 
           {spacesQuery.isError && (
@@ -345,7 +326,7 @@ const MySpacesPage: React.FC = () => {
           {hasMore && (
             <div className="mt-6 flex justify-center">
               <Button
-                onClick={() => loadMore()}
+                onClick={() => spacesQuery.fetchNextPage()}
                 disabled={
                   !spacesQuery.hasNextPage || spacesQuery.isFetchingNextPage
                 }
