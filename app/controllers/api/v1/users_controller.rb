@@ -28,7 +28,8 @@ class Api::V1::UsersController < ApplicationController
       id: user.id,
       email: user.email,
       firstName: user.first_name,
-      lastName: user.last_name
+      lastName: user.last_name,
+      avatarUrl: user.avatar_url
     }
   end
 end
