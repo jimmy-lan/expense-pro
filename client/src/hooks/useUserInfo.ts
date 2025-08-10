@@ -1,15 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { authApi } from "../lib/api";
 
-export interface StoredUser {
-  first_name?: string;
-  last_name?: string;
-  firstName?: string;
-  lastName?: string;
-  email?: string;
-}
+export type StoredUser = Record<string, any> | null;
 
-type LogoutOptions = {
+export type LogoutOptions = {
   redirectTo?: string | null; // null disables navigation
 };
 
@@ -51,10 +46,7 @@ export function useUserInfo() {
       const redirectTo =
         options?.redirectTo === undefined ? "/" : options.redirectTo;
       try {
-        await fetch("/api/v1/logout", {
-          method: "DELETE",
-          credentials: "include",
-        });
+        await authApi.logout();
       } catch (_) {
         // ignore network errors; proceed to clear local state
       } finally {

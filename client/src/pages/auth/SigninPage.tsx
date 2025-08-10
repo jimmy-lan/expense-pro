@@ -8,6 +8,8 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { AuthContainer } from "./AuthContainer";
 import { useBreakpoint } from "../../hooks";
+import { useMutation } from "@tanstack/react-query";
+import { authApi } from "../../lib/api";
 
 interface LoginFormFields {
   email: string;
@@ -34,6 +36,10 @@ const SigninPage: React.FC = () => {
   const navigate = useNavigate();
   const [serverError, setServerError] = useState<string | null>(null);
   const isMobile = useBreakpoint("sm");
+  const loginMutation = useMutation({
+    mutationFn: (payload: { email: string; password: string }) =>
+      authApi.login(payload),
+  });
 
   const {
     register,
@@ -47,21 +53,11 @@ const SigninPage: React.FC = () => {
   const onSubmit = async (values: LoginFormFields) => {
     setServerError(null);
     try {
-      const res = await fetch("/api/v1/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(values),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error((data as any).error || "Login failed");
-      }
-      const data = await res.json();
+      const data = await loginMutation.mutateAsync(values);
       localStorage.setItem("user", JSON.stringify((data as any).user));
       navigate("/my");
     } catch (err: any) {
-      setServerError(err.message || "Something went wrong");
+      setServerError(err?.message || "Something went wrong");
     }
   };
 
@@ -101,7 +97,7 @@ const SigninPage: React.FC = () => {
 
         <Button
           type="submit"
-          loading={isSubmitting}
+          loading={isSubmitting || loginMutation.isPending}
           fullWidth={isMobile}
           className="md:min-w-40"
         >

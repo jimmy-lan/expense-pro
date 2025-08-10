@@ -8,6 +8,8 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { AuthContainer } from "./AuthContainer";
 import { useBreakpoint } from "../../hooks";
+import { useMutation } from "@tanstack/react-query";
+import { authApi } from "../../lib/api";
 
 interface SignupFormFields {
   firstName: string;
@@ -46,6 +48,15 @@ const SignupPage: React.FC = () => {
   const navigate = useNavigate();
   const [serverError, setServerError] = useState<string | null>(null);
   const isMobile = useBreakpoint("sm");
+  const signupMutation = useMutation({
+    mutationFn: (payload: {
+      firstName: string;
+      lastName: string;
+      email: string;
+      password: string;
+      passwordConfirmation: string;
+    }) => authApi.signup(payload),
+  });
 
   const {
     register,
@@ -59,30 +70,11 @@ const SignupPage: React.FC = () => {
   const onSubmit = async (values: SignupFormFields) => {
     setServerError(null);
     try {
-      const res = await fetch("/api/v1/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          user: {
-            first_name: values.firstName,
-            last_name: values.lastName,
-            email: values.email,
-            password: values.password,
-            password_confirmation: values.passwordConfirmation,
-          },
-        }),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        const msg = (data as any).errors?.join(", ") || "Signup failed";
-        throw new Error(msg);
-      }
-      const data = await res.json();
+      const data = await signupMutation.mutateAsync(values);
       localStorage.setItem("user", JSON.stringify((data as any).user));
       navigate("/");
     } catch (err: any) {
-      setServerError(err.message || "Something went wrong");
+      setServerError(err?.message || "Something went wrong");
     }
   };
 
@@ -159,7 +151,7 @@ const SignupPage: React.FC = () => {
 
         <Button
           type="submit"
-          loading={isSubmitting}
+          loading={isSubmitting || signupMutation.isPending}
           fullWidth={isMobile}
           className="md:min-w-40"
         >

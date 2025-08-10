@@ -5,6 +5,11 @@ import App from "./App";
 import reportWebVitals from "./reportWebVitals";
 import { ThemeProvider } from "@material-tailwind/react";
 import { theme } from "./theme";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { createAppQueryClient } from "./lib/queryClient";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+
+const queryClient = createAppQueryClient();
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
@@ -12,7 +17,12 @@ const root = ReactDOM.createRoot(
 root.render(
   <React.StrictMode>
     <ThemeProvider value={theme}>
-      <App />
+      <QueryClientProvider client={queryClient}>
+        <App />
+        {process.env.NODE_ENV === "development" && (
+          <ReactQueryDevtools initialIsOpen={false} />
+        )}
+      </QueryClientProvider>
     </ThemeProvider>
   </React.StrictMode>
 );

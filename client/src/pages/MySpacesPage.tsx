@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Typography,
   Spinner,
@@ -30,28 +30,21 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import { useUserInfo } from "../hooks";
+import type { SpaceDto, SpacesFilter } from "../lib/api";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { spacesApi } from "../lib/api";
 
 // Enable human readable times, e.g., "5 minutes ago", "yesterday"
 dayjs.extend(relativeTime);
 
-// Types matching backend `Api::V1::SpacesController#index`
-interface SpaceDto {
-  id: number;
-  name: string;
-  createdAt: string;
-  createdByName: string;
-  role?: "member" | "admin" | null;
-  transactionsCount: number;
-  lastTransactionAt: string | null;
+function formatLastActivity(ts: string | null): string {
+  if (!ts) return "N/A";
+  try {
+    return dayjs(ts).fromNow();
+  } catch {
+    return "N/A";
+  }
 }
-
-interface SpacesResponse {
-  spaces: SpaceDto[];
-  lastCursor: string | null;
-  hasMore: boolean;
-}
-
-type SpacesFilter = "all" | "created" | "invited";
 
 const MENU_ITEMS: Array<{
   key: SpacesFilter;
@@ -62,15 +55,6 @@ const MENU_ITEMS: Array<{
   { key: "created", label: "Created by Me", icon: faUser },
   { key: "invited", label: "Shared with Me", icon: faUsers },
 ];
-
-function formatLastActivity(ts: string | null): string {
-  if (!ts) return "N/A";
-  try {
-    return dayjs(ts).fromNow();
-  } catch {
-    return "N/A";
-  }
-}
 
 const EmptyState: React.FC<{
   title: string;
@@ -107,7 +91,6 @@ const EmptyState: React.FC<{
   </div>
 );
 
-// Reusable spaces filter menu list (used in sidebar and mobile dropdown)
 const SpacesMenuList: React.FC<{
   selected: SpacesFilter;
   onSelect: (value: SpacesFilter) => void;
@@ -227,12 +210,6 @@ const MySpacesPage: React.FC = () => {
   const { logout } = useUserInfo();
 
   const [selected, setSelected] = useState<SpacesFilter>("all");
-  const [spaces, setSpaces] = useState<SpaceDto[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [cursor, setCursor] = useState<string | null>(null);
-  const [hasMore, setHasMore] = useState(false);
-
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const headerTitle = useMemo(
@@ -240,50 +217,28 @@ const MySpacesPage: React.FC = () => {
     [selected]
   );
 
-  const loadSpaces = useCallback(
-    async (opts?: { reset?: boolean }) => {
-      const reset = opts?.reset ?? false;
-      if (reset) {
-        setSpaces([]);
-        setCursor(null);
-        setHasMore(false);
-      }
-      setLoading(true);
-      setError(null);
-      try {
-        const url = new URL("/api/v1/spaces", window.location.origin);
-        url.searchParams.set("filter", selected);
-        if (!reset && cursor) url.searchParams.set("cursor", cursor);
-        const res = await fetch(
-          url.toString().replace(window.location.origin, ""),
-          {
-            credentials: "include",
-          }
-        );
-        if (res.status === 401) {
-          navigate("/login");
-          return;
-        }
-        if (!res.ok) {
-          const data = await res.json().catch(() => ({} as any));
-          throw new Error((data as any).error || "Failed to load spaces");
-        }
-        const data: SpacesResponse = await res.json();
-        setSpaces((prev) => (reset ? data.spaces : [...prev, ...data.spaces]));
-        setCursor(data.lastCursor);
-        setHasMore(data.hasMore);
-      } catch (err: any) {
-        setError(err.message || "Unexpected error");
-      } finally {
-        setLoading(false);
-      }
-    },
-    [selected, cursor, navigate]
+  const spacesQuery = useInfiniteQuery({
+    queryKey: ["spaces", selected],
+    queryFn: ({ pageParam }) =>
+      spacesApi.list({ filter: selected, cursor: pageParam ?? null }),
+    getNextPageParam: (lastPage) =>
+      lastPage.hasMore ? lastPage.lastCursor : undefined,
+    initialPageParam: null as string | null,
+  });
+
+  const allSpaces: SpaceDto[] = (spacesQuery.data?.pages || []).flatMap(
+    (p: { spaces: SpaceDto[] }) => p.spaces
   );
+  const hasMore: boolean = spacesQuery.data?.pages?.at(-1)?.hasMore ?? false;
+
+  const refresh = () => spacesQuery.refetch();
+  const loadMore = () => spacesQuery.fetchNextPage();
 
   useEffect(() => {
-    loadSpaces({ reset: true });
-  }, [selected, loadSpaces]);
+    if ((spacesQuery.error as any)?.status === 401) {
+      navigate("/login");
+    }
+  }, [spacesQuery.error, navigate]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -294,11 +249,11 @@ const MySpacesPage: React.FC = () => {
           <div className="ml-auto flex items-center gap-2">
             <Tooltip content="Reload">
               <IconButton
-                onClick={() => loadSpaces({ reset: true })}
-                disabled={loading}
+                onClick={() => refresh()}
+                disabled={spacesQuery.isFetching}
                 className="rounded-full bg-gray-100 text-gray-900 shadow-none hover:bg-gray-200"
               >
-                {loading ? (
+                {spacesQuery.isFetching ? (
                   <Spinner className="h-4 w-4" />
                 ) : (
                   <FontAwesomeIcon icon={faArrowRotateRight} />
@@ -364,23 +319,23 @@ const MySpacesPage: React.FC = () => {
             </Typography>
           </div>
 
-          {error && (
+          {spacesQuery.isError && (
             <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-red-700">
-              {error}
+              {(spacesQuery.error as any)?.message || "Failed to load"}
             </div>
           )}
 
-          {spaces.length === 0 && !loading ? (
+          {allSpaces.length === 0 && !spacesQuery.isLoading ? (
             <EmptyState
               title="No spaces yet"
               subtitle="Create a space from the app to get started."
-              onRefresh={() => loadSpaces({ reset: true })}
-              loading={loading}
+              onRefresh={() => refresh()}
+              loading={spacesQuery.isFetching}
               icon={faBorderNone}
             />
           ) : (
             <div className="space-y-3">
-              {spaces.map((space) => (
+              {allSpaces.map((space: SpaceDto) => (
                 <SpaceCard key={space.id} space={space} />
               ))}
             </div>
@@ -390,11 +345,13 @@ const MySpacesPage: React.FC = () => {
           {hasMore && (
             <div className="mt-6 flex justify-center">
               <Button
-                onClick={() => loadSpaces()}
-                disabled={loading}
+                onClick={() => loadMore()}
+                disabled={
+                  !spacesQuery.hasNextPage || spacesQuery.isFetchingNextPage
+                }
                 variant="outlined"
               >
-                {loading ? "Loading..." : "Load more"}
+                {spacesQuery.isFetchingNextPage ? "Loading..." : "Load more"}
               </Button>
             </div>
           )}
