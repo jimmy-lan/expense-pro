@@ -10,8 +10,12 @@ Rails.application.routes.draw do
       post   "login",  to: "sessions#create"
       delete "logout", to: "sessions#destroy"
 
-      resources :spaces, only: [ :index ]
-      get "spaces/limits", to: "spaces#limits"
+      resources :spaces, only: [ :index, :create ] do
+        collection do
+          get :limits
+          get :check_name
+        end
+      end
     end
   end
 

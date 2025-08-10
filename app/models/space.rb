@@ -6,4 +6,6 @@ class Space < ApplicationRecord
   has_many :transactions, dependent: :destroy
 
   validates :name, presence: true
+  validates :name, uniqueness: { scope: :created_by_id, case_sensitive: false }
+  validates :description, length: { maximum: 200 }, allow_nil: true
 end

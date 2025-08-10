@@ -50,6 +50,52 @@ class Api::V1::SpacesController < ApplicationController
     }
   end
 
+  def create
+    plan = current_user.plan
+    if current_user.created_spaces_count >= plan.max_spaces
+      render json: { error: "You have reached the maximum number of spaces for your plan." }, status: :unprocessable_entity
+      return
+    end
+
+    name = params[:name].to_s.strip
+    description = params[:description].to_s.strip.presence
+
+    space = Space.new(name: name, description: description, created_by: current_user)
+
+    begin
+      Space.transaction do
+        space.save!
+        SpaceMembership.create!(user: current_user, space: space, role: "admin")
+      end
+    rescue ActiveRecord::RecordInvalid => e
+      render json: { errors: space.errors.full_messages.presence || [ e.record.errors.full_messages.presence || e.message ].flatten }, status: :unprocessable_entity
+      return
+    rescue ActiveRecord::RecordNotUnique
+      render json: { errors: ["Name has already been taken"] }, status: :unprocessable_entity
+      return
+    end
+
+    render json: {
+      space: {
+        id: space.id,
+        name: space.name,
+        description: space.description,
+        createdAt: space.created_at
+      }
+    }, status: :created
+  end
+
+  def check_name
+    name = params[:name].to_s.strip
+    if name.blank?
+      render json: { available: false }
+      return
+    end
+
+    exists = Space.where(created_by_id: current_user.id).where("LOWER(name) = ?", name.downcase).exists?
+    render json: { available: !exists }
+  end
+
   private
 
   def spaces_scope_for_filter(filter)
