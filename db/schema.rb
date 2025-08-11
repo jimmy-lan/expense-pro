@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_08_09_071000) do
+ActiveRecord::Schema[8.0].define(version: 2025_08_09_072000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -22,7 +22,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_09_071000) do
     t.integer "expires_after_days"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "max_members_per_space", null: false
     t.index ["key"], name: "index_plans_on_key", unique: true
+    t.check_constraint "max_members_per_space > 0", name: "plans_max_members_positive"
     t.check_constraint "max_spaces > 0", name: "plans_max_spaces_positive"
     t.check_constraint "max_transactions_per_space > 0", name: "plans_max_tx_positive"
   end

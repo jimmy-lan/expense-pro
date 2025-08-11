@@ -1,3 +1,6 @@
+require "net/http"
+require "uri"
+
 class Api::V1::SpacesController < ApplicationController
   before_action :authenticate_user!
 
@@ -71,7 +74,7 @@ class Api::V1::SpacesController < ApplicationController
       render json: { errors: space.errors.full_messages.presence || [ e.record.errors.full_messages.presence || e.message ].flatten }, status: :unprocessable_entity
       return
     rescue ActiveRecord::RecordNotUnique
-      render json: { errors: ["Name has already been taken"] }, status: :unprocessable_entity
+      render json: { errors: [ "Name has already been taken" ] }, status: :unprocessable_entity
       return
     end
 
@@ -94,6 +97,128 @@ class Api::V1::SpacesController < ApplicationController
 
     exists = Space.where(created_by_id: current_user.id).where("LOWER(name) = ?", name.downcase).exists?
     render json: { available: !exists }
+  end
+
+  # Invite a user by email to a space where the current user is an admin.
+  def invite
+    admin_membership = SpaceMembership.includes(:space).where(space_id: params[:id], user_id: current_user.id, role: "admin").first
+    unless admin_membership
+      render json: { error: "Space not found" }, status: :not_found
+      return
+    end
+    space = admin_membership.space
+
+    invitee_email = params[:email].to_s.strip.downcase
+    if invitee_email.blank?
+      render json: { error: "Email is required" }, status: :unprocessable_entity
+      return
+    end
+
+    invitee = User.where("LOWER(email) = ?", invitee_email).first
+    unless invitee
+      render json: { error: "The user to invite does not exist in the system." }, status: :unprocessable_entity
+      return
+    end
+
+    if invitee.id == current_user.id
+      render json: { error: "You cannot invite yourself." }, status: :unprocessable_entity
+      return
+    end
+
+    error_message = nil
+    already_member = false
+
+    begin
+      SpaceMembership.transaction do
+        # Lock the space row to prevent concurrent capacity checks
+        space.reload.lock!
+
+        current_member_count = SpaceMembership.where(space_id: space.id).count
+        max_allowed = space.max_members_allowed
+        if current_member_count >= max_allowed
+          error_message = "This space has reached its maximum capacity (#{max_allowed} members)."
+          raise ActiveRecord::Rollback
+        end
+
+        existing = SpaceMembership.where(user_id: invitee.id, space_id: space.id).first
+        if existing
+          already_member = true
+          raise ActiveRecord::Rollback
+        end
+
+        SpaceMembership.create!(user: invitee, space: space, role: "member")
+      end
+    rescue ActiveRecord::RecordInvalid => e
+      render json: { errors: [ e.record.errors.full_messages.presence || e.message ].flatten }, status: :unprocessable_entity
+      return
+    rescue ActiveRecord::RecordNotUnique
+      already_member = true
+    end
+
+    if error_message.present?
+      render json: { error: error_message }, status: :unprocessable_entity
+      return
+    end
+
+    if already_member
+      render json: { message: "User is already a member of this space." }
+      return
+    end
+
+    begin
+      send_invite_email(invitee.email, space.name)
+    rescue => e
+      Rails.logger.error("Failed to send invite email: #{e.message}")
+    end
+
+    render json: { success: true }
+  end
+
+  # List all members of a space visible to the current user (must be a member of that space)
+  def members
+    membership = SpaceMembership.where(space_id: params[:id], user_id: current_user.id).first
+    unless membership
+      render json: { error: "Space not found" }, status: :not_found
+      return
+    end
+
+    memberships = SpaceMembership.joins(:user).includes(:user).where(space_id: membership.space_id).order("users.first_name ASC, users.last_name ASC")
+
+    render json: {
+      members: memberships.map { |m|
+        {
+          id: m.user.id,
+          email: m.user.email,
+          firstName: m.user.first_name,
+          lastName: m.user.last_name,
+          role: m.role
+        }
+      }
+    }
+  end
+
+  # Remove a member from a space (admin only). Current user cannot remove themself.
+  def remove_member
+    admin_membership = SpaceMembership.where(space_id: params[:id], user_id: current_user.id, role: "admin").first
+    unless admin_membership
+      render json: { error: "Space not found" }, status: :not_found
+      return
+    end
+
+    target_user_id = params[:user_id].to_i
+    if target_user_id == current_user.id
+      render json: { error: "You cannot remove yourself." }, status: :unprocessable_entity
+      return
+    end
+
+    membership = SpaceMembership.where(space_id: admin_membership.space_id, user_id: target_user_id).first
+    unless membership
+      render json: { error: "Member not found" }, status: :not_found
+      return
+    end
+
+    membership.destroy!
+    render json: { success: true }
   end
 
   private
@@ -181,5 +306,34 @@ class Api::V1::SpacesController < ApplicationController
       transactionsCount: space.transactions_count,
       lastTransactionAt: space.attributes["last_transaction_at"]
     }
+  end
+
+  def send_invite_email(to_email, space_name)
+    api_key = ENV["SENDGRID_API_KEY"]
+    return if api_key.to_s.strip.empty?
+
+    uri = URI.parse("https://api.sendgrid.com/v3/mail/send")
+    http = Net::HTTP.new(uri.host, uri.port)
+    http.use_ssl = true
+
+    from_email = ENV["INVITE_EMAIL_SENDER"].presence || "no-reply@example.com"
+
+    payload = {
+      personalizations: [
+        {
+          to: [ { email: to_email } ],
+          subject: "You've been invited"
+        }
+      ],
+      from: { email: from_email },
+      content: [ { type: "text/plain", value: "You've been invited to join the space '#{space_name}'." } ]
+    }
+
+    request = Net::HTTP::Post.new(uri.request_uri)
+    request["Authorization"] = "Bearer #{api_key}"
+    request["Content-Type"] = "application/json"
+    request.body = payload.to_json
+
+    http.request(request)
   end
 end

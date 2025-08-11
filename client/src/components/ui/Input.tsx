@@ -1,5 +1,9 @@
 import React, { useState } from "react";
-import { IconButton, Input as MTInput } from "@material-tailwind/react";
+import {
+  IconButton,
+  Input as MTInput,
+  Spinner,
+} from "@material-tailwind/react";
 import { twMerge } from "tailwind-merge";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
@@ -14,6 +18,7 @@ export type AppInputProps = Omit<
   size?: NativeMTInputProps["size"];
   variant?: NativeMTInputProps["variant"];
   helperText?: string;
+  endAdornment?: React.ReactNode | false;
 };
 
 export const Input = React.forwardRef<NativeMTInputRef, AppInputProps>(
@@ -26,6 +31,7 @@ export const Input = React.forwardRef<NativeMTInputRef, AppInputProps>(
       placeholder,
       helperText,
       type,
+      endAdornment,
       ...rest
     },
     ref
@@ -55,7 +61,7 @@ export const Input = React.forwardRef<NativeMTInputRef, AppInputProps>(
           }}
           {...rest}
         />
-        {isPassword && (
+        {isPassword ? (
           <IconButton
             className="!absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-gray-200 hover:bg-gray-300 text-black/90 shadow-none hover:shadow-none"
             onClick={() => setShowPassword(!showPassword)}
@@ -66,7 +72,11 @@ export const Input = React.forwardRef<NativeMTInputRef, AppInputProps>(
               <FontAwesomeIcon icon={faEye} />
             )}
           </IconButton>
-        )}
+        ) : endAdornment ? (
+          <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500">
+            {typeof endAdornment === "boolean" ? null : endAdornment}
+          </div>
+        ) : null}
         {helperText && (
           <p className="!mt-1 text-xs text-red-600">{helperText}</p>
         )}

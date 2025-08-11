@@ -13,6 +13,7 @@ regular = Plan.find_or_create_by!(key: "regular") do |p|
   p.max_spaces = 20
   p.max_transactions_per_space = 500
   p.expires_after_days = 60
+  p.max_members_per_space = 5
 end
 
 premium = Plan.find_or_create_by!(key: "premium") do |p|
@@ -20,6 +21,7 @@ premium = Plan.find_or_create_by!(key: "premium") do |p|
   p.max_spaces = 50
   p.max_transactions_per_space = 10_000
   p.expires_after_days = nil
+  p.max_members_per_space = 12
 end
 
 u1 = User.find_or_initialize_by(email: "user1.test@example.com")

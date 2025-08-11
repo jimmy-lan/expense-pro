@@ -15,6 +15,11 @@ Rails.application.routes.draw do
           get :limits
           get :check_name
         end
+        member do
+          post :invite
+          get  :members
+          delete :remove_member
+        end
       end
     end
   end

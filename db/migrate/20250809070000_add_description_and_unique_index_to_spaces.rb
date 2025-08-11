@@ -15,4 +15,4 @@ class AddDescriptionAndUniqueIndexToSpaces < ActiveRecord::Migration[8.0]
     remove_index :spaces, name: "index_spaces_on_lower_name_and_created_by_id"
     remove_column :spaces, :description
   end
-end 
+end

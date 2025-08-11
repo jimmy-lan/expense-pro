@@ -293,7 +293,12 @@ const MySpacesPage: React.FC = () => {
               </Typography>
             </div>
             <div className="mb-4 flex md:items-center md:justify-center">
-              <Button size="md" variant="outlined" fullWidth>
+              <Button
+                size="md"
+                variant="outlined"
+                fullWidth
+                onClick={() => navigate("/spaces/new")}
+              >
                 <FontAwesomeIcon icon={faPlus} className="mr-2" />
                 New Space
               </Button>

@@ -91,6 +91,14 @@ export interface SpacesResponse {
   hasMore: boolean;
 }
 
+export interface SpaceMemberDto {
+  id: number;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: "member" | "admin";
+}
+
 export const spacesApi = {
   list: async (params: { filter: SpacesFilter; cursor?: string | null }) => {
     const url = new URL(`/api/v1/spaces`, window.location.origin);
@@ -98,5 +106,51 @@ export const spacesApi = {
     if (params.cursor) url.searchParams.set("cursor", params.cursor);
     const path = url.toString().replace(window.location.origin, "");
     return apiFetch<SpacesResponse>(path, { method: "GET" });
+  },
+  checkName: async (name: string) => {
+    const url = new URL(`/api/v1/spaces/check_name`, window.location.origin);
+    url.searchParams.set("name", name);
+    const path = url.toString().replace(window.location.origin, "");
+    return apiFetch<{ available: boolean }>(path, { method: "GET" });
+  },
+  create: async (payload: { name: string; description?: string | null }) => {
+    return apiFetch<{
+      space: {
+        id: number;
+        name: string;
+        description?: string | null;
+        createdAt: string;
+      };
+    }>(`/api/v1/spaces`, {
+      method: "POST",
+      body: JSON.stringify({
+        name: payload.name,
+        description: payload.description ?? null,
+      }),
+    });
+  },
+  members: async (spaceId: number) => {
+    return apiFetch<{ members: SpaceMemberDto[] }>(
+      `/api/v1/spaces/${spaceId}/members`,
+      { method: "GET" }
+    );
+  },
+  invite: async (spaceId: number, email: string) => {
+    return apiFetch<{ success?: boolean; message?: string }>(
+      `/api/v1/spaces/${spaceId}/invite`,
+      {
+        method: "POST",
+        body: JSON.stringify({ email }),
+      }
+    );
+  },
+  removeMember: async (spaceId: number, userId: number) => {
+    const url = new URL(
+      `/api/v1/spaces/${spaceId}/remove_member`,
+      window.location.origin
+    );
+    url.searchParams.set("user_id", String(userId));
+    const path = url.toString().replace(window.location.origin, "");
+    return apiFetch<{ success: boolean }>(path, { method: "DELETE" });
   },
 };
