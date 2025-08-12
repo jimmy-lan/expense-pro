@@ -6,7 +6,6 @@ import {
   MenuList,
   MenuItem,
   Avatar,
-  IconButton,
 } from "@material-tailwind/react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";

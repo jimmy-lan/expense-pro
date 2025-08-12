@@ -1,9 +1,5 @@
 import React, { useState } from "react";
-import {
-  IconButton,
-  Input as MTInput,
-  Spinner,
-} from "@material-tailwind/react";
+import { IconButton, Input as MTInput } from "@material-tailwind/react";
 import { twMerge } from "tailwind-merge";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";

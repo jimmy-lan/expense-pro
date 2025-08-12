@@ -57,10 +57,11 @@ const MENU_ITEMS: Array<{
 const EmptyState: React.FC<{
   title: string;
   subtitle?: string;
-  onRefresh?: () => void;
+  onButtonClick?: () => void;
   loading?: boolean;
   icon?: IconDefinition;
-}> = ({ title, subtitle, onRefresh, loading, icon }) => (
+  buttonLabel?: string;
+}> = ({ title, subtitle, onButtonClick, loading, icon, buttonLabel }) => (
   <div className="flex flex-col items-center justify-center rounded-xl border border-gray-200 bg-white p-10 text-center shadow-sm">
     {icon && (
       <div className="mb-4">
@@ -75,15 +76,16 @@ const EmptyState: React.FC<{
         {subtitle}
       </Typography>
     )}
-    {onRefresh && (
+    {onButtonClick && (
       <Button
-        onClick={onRefresh}
+        onClick={onButtonClick}
         disabled={loading}
         className="mt-6"
         variant="outlined"
         color="primary"
+        loading={loading}
       >
-        {loading ? "Refreshing..." : "Refresh"}
+        {buttonLabel ?? "Refresh"}
       </Button>
     )}
   </div>
@@ -229,7 +231,6 @@ const MySpacesPage: React.FC = () => {
   const hasMore: boolean = spacesQuery.data?.pages?.at(-1)?.hasMore ?? false;
 
   const refresh = () => spacesQuery.refetch();
-  const loadMore = () => spacesQuery.fetchNextPage();
 
   useEffect(() => {
     if ((spacesQuery.error as any)?.status === 401) {
@@ -315,8 +316,13 @@ const MySpacesPage: React.FC = () => {
             <EmptyState
               title="No spaces yet"
               subtitle="Create a space from the app to get started."
-              onRefresh={() => refresh()}
-              loading={spacesQuery.isFetching}
+              buttonLabel={selected === "invited" ? undefined : "Create"}
+              onButtonClick={
+                selected === "invited"
+                  ? () => refresh()
+                  : () => navigate("/spaces/new")
+              }
+              loading={selected === "invited" ? spacesQuery.isFetching : false}
               icon={faBorderNone}
             />
           ) : (

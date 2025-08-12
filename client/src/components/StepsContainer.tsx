@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { AppNavbar } from "./AppNavbar";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChevronLeft } from "@fortawesome/free-solid-svg-icons";
 import { Button } from "./ui/Button";

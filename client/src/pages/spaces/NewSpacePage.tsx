@@ -61,7 +61,6 @@ export const NewSpacePage: React.FC = () => {
     formState: { errors, isSubmitting },
     setError,
     clearErrors,
-    reset,
   } = useForm<CreateSpaceFields>({
     defaultValues: { name: "", description: "" },
     resolver: yupResolver(schema),
