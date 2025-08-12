@@ -36,12 +36,15 @@ export function useUserInfo() {
           setUser(e.newValue ? JSON.parse(e.newValue) : null);
         } catch (_) {
           setUser(null);
+        } finally {
+          // Clear query cache in this tab when auth user changes elsewhere
+          queryClient.clear();
         }
       }
     };
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
-  }, []);
+  }, [queryClient]);
 
   const logout = useCallback(
     async (options?: LogoutOptions) => {
