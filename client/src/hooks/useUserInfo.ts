@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { authApi } from "../lib/api";
+import { useQueryClient } from "@tanstack/react-query";
 
 export type StoredUser = Record<string, any> | null;
 
@@ -11,6 +12,7 @@ export type LogoutOptions = {
 export function useUserInfo() {
   const [user, setUser] = useState<StoredUser | null>(null);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -50,6 +52,10 @@ export function useUserInfo() {
       } catch (_) {
         // ignore network errors; proceed to clear local state
       } finally {
+        try {
+          await queryClient.cancelQueries();
+        } catch (_) {}
+        queryClient.clear();
         localStorage.removeItem("user");
         setUser(null);
         if (redirectTo !== null) {
@@ -57,7 +63,7 @@ export function useUserInfo() {
         }
       }
     },
-    [navigate]
+    [navigate, queryClient]
   );
 
   return { user, logout };
