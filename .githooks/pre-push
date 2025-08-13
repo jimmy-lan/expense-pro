@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "Running RuboCop auto-correct..."
+bin/rubocop --autocorrect-all
+
+echo "Running ESLint auto-fix in client/..."
+if [ -d "client" ]; then
+	(
+		cd client
+		npx eslint . --ext .js,.jsx,.ts,.tsx --fix --max-warnings=0
+	)
+fi
+
+# Abort push if auto-fixes produced changes that aren't committed
+# Ensures you don't push code that was modified by the hook
+git update-index -q --refresh
+if ! git diff-index --quiet HEAD --; then
+	echo
+	echo "Pre-push: Auto-fixes applied. Please commit the changes and push again."
+	exit 1
+fi 
