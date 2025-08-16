@@ -36,6 +36,32 @@ if (process.env.NODE_ENV === "production" && "serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker
       .register(`${process.env.PUBLIC_URL}/service-worker.js`)
+      .then((registration) => {
+        if (registration.waiting) {
+          registration.waiting.postMessage({ type: "SKIP_WAITING" });
+        }
+
+        registration.addEventListener("updatefound", () => {
+          const newWorker = registration.installing;
+          if (!newWorker) return;
+
+          newWorker.addEventListener("statechange", () => {
+            if (
+              newWorker.state === "installed" &&
+              navigator.serviceWorker.controller
+            ) {
+              registration.waiting?.postMessage({ type: "SKIP_WAITING" });
+            }
+          });
+        });
+
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener("controllerchange", () => {
+          if (refreshing) return;
+          refreshing = true;
+          window.location.reload();
+        });
+      })
       .catch(() => {});
   });
 }
