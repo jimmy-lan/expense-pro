@@ -11,7 +11,8 @@ class Api::V1::SpacesController < ApplicationController
 
     base_scope = spaces_scope_for_filter(filter)
 
-    last_tx_expr = last_transaction_expr_sql
+    # Use last activity time: latest transaction time, or space creation time if no transactions
+    last_tx_expr = last_activity_expr_sql
 
     scoped = base_scope
       .select("spaces.*, (#{last_tx_expr}) AS last_transaction_at, my_membership.role AS current_user_role")
@@ -237,6 +238,11 @@ class Api::V1::SpacesController < ApplicationController
   # MAX(transactions.created_at) for each space
   def last_transaction_expr_sql
     Transaction.where("transactions.space_id = spaces.id").select("MAX(transactions.created_at)").to_sql
+  end
+
+  # Last activity is the latest transaction timestamp or the space creation time when there are no transactions
+  def last_activity_expr_sql
+    "COALESCE((#{last_transaction_expr_sql}), spaces.created_at)"
   end
 
   def cursor_valid?(cursor)
