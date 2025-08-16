@@ -12,7 +12,7 @@ import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { StepsContainer, Step } from "../../components/StepsContainer";
-import { Input } from "../../components/ui/Input";
+import { Input, TextArea } from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
 import { spacesApi, SpaceMemberDto } from "../../lib/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -22,7 +22,7 @@ import { useUserInfo } from "../../hooks";
 const steps = [
   { id: "name", title: "Name Your Space" },
   { id: "invite", title: "Invite Others" },
-] as const;
+];
 
 type StepId = (typeof steps)[number]["id"];
 
@@ -35,18 +35,22 @@ const schema: yup.ObjectSchema<CreateSpaceFields> = yup.object({
   name: yup
     .string()
     .required("Space name is required")
-    .min(2, "Minimum 2 characters")
-    .max(80, "Maximum 80 characters"),
-  description: yup.string().max(200, "Maximum 200 characters").optional(),
+    .min(2, "Space name should contain at least 2 characters.")
+    .max(80, "Space name should contain at most 80 characters."),
+  description: yup
+    .string()
+    .max(200, "Description should contain at most 200 characters.")
+    .optional(),
 });
 
-export const NewSpacePage: React.FC = () => {
-  const [currentStepId, setCurrentStepId] = useState<StepId>("name");
-  const [serverError, setServerError] = useState<string | null>(null);
-  const [createdSpaceId, setCreatedSpaceId] = useState<number | null>(null);
-  const navigate = useNavigate();
-  const { user } = useUserInfo();
+// Step 1: Name your space
+interface NameStepProps {
+  onCreated: (spaceId: number) => void;
+}
 
+const NameStep: React.FC<NameStepProps> = ({ onCreated }) => {
+  const navigate = useNavigate();
+  const [serverError, setServerError] = useState<string | null>(null);
   const [nameStatus, setNameStatus] = useState<
     | { state: "idle" }
     | { state: "loading" }
@@ -68,10 +72,11 @@ export const NewSpacePage: React.FC = () => {
 
   const nameValue = watch("name");
 
-  // Debounced availability check
   useEffect(() => {
     let ignore = false;
-    if (!nameValue || nameValue.trim().length === 0) {
+    const trimmed = nameValue?.trim() || "";
+
+    if (!trimmed) {
       setNameStatus({ state: "idle" });
       clearErrors("name");
       return;
@@ -81,7 +86,7 @@ export const NewSpacePage: React.FC = () => {
 
     const handler = setTimeout(async () => {
       try {
-        const res = await spacesApi.checkName(nameValue.trim());
+        const res = await spacesApi.checkName(trimmed);
         if (ignore) return;
         if (res.available) {
           setNameStatus({ state: "available" });
@@ -95,14 +100,9 @@ export const NewSpacePage: React.FC = () => {
         }
       } catch (e: any) {
         if (ignore) return;
-        setNameStatus({
-          state: "unavailable",
-          message: e?.message || "Validation failed",
-        });
-        setError("name", {
-          type: "manual",
-          message: e?.message || "Validation failed",
-        });
+        const message = e?.message || "Validation failed";
+        setNameStatus({ state: "unavailable", message });
+        setError("name", { type: "manual", message });
       }
     }, 350);
 
@@ -130,14 +130,76 @@ export const NewSpacePage: React.FC = () => {
         name: values.name.trim(),
         description: values.description?.trim() || null,
       });
-      setCreatedSpaceId(res.space.id);
-      setCurrentStepId("invite");
+      onCreated(res.space.id);
     } catch (err: any) {
       setServerError(err?.message || "Failed to create space");
     }
   };
 
-  // Step 2 state and data
+  return (
+    <>
+      <Typography variant="h3" className="mb-1 text-gray-900 font-bold">
+        Name Your Space
+      </Typography>
+      <Typography variant="small" className="mb-6 text-gray-600">
+        Choose a unique name for your space
+      </Typography>
+
+      {serverError && (
+        <div className="bg-red-50 text-red-700 px-3 py-2 rounded mb-4 text-sm">
+          {serverError}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <Input
+          {...register("name")}
+          label="Space Name"
+          error={!!errors.name}
+          helperText={errors.name?.message}
+          endAdornment={endAdornment}
+          autoFocus
+          required
+        />
+
+        <TextArea
+          {...register("description")}
+          label="Description"
+          error={!!errors.description}
+          helperText={errors.description?.message}
+        />
+
+        <div className="flex justify-between pt-2">
+          <Button
+            type="submit"
+            loading={isSubmitting}
+            disabled={nameStatus.state === "loading"}
+            className="md:min-w-40"
+          >
+            Create Space
+          </Button>
+          <Button
+            variant="text"
+            className="md:min-w-30"
+            color="gray"
+            onClick={() => navigate("/my")}
+          >
+            Cancel
+          </Button>
+        </div>
+      </form>
+    </>
+  );
+};
+
+// Step 2: Invite members
+interface InviteStepProps {
+  spaceId: number;
+  currentUserId?: number | null;
+}
+
+const InviteStep: React.FC<InviteStepProps> = ({ spaceId, currentUserId }) => {
+  const navigate = useNavigate();
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteError, setInviteError] = useState<string | null>(null);
   const queryClient = useQueryClient();
@@ -147,9 +209,9 @@ export const NewSpacePage: React.FC = () => {
     isLoading: membersLoading,
     error: membersError,
   } = useQuery({
-    enabled: currentStepId === "invite" && !!createdSpaceId,
-    queryKey: ["space-members", createdSpaceId],
-    queryFn: () => spacesApi.members(createdSpaceId as number),
+    enabled: !!spaceId,
+    queryKey: ["space-members", spaceId],
+    queryFn: () => spacesApi.members(spaceId),
     refetchOnWindowFocus: true,
   });
 
@@ -157,8 +219,7 @@ export const NewSpacePage: React.FC = () => {
     const trimmed = email.trim();
     if (!trimmed) return "Email is required";
     const re = /[^\s@]+@[^\s@]+\.[^\s@]+/;
-    if (!re.test(trimmed)) return "Enter a valid email";
-    return null;
+    return re.test(trimmed) ? null : "Enter a valid email";
   };
 
   const inviteMutation = useMutation({
@@ -169,186 +230,160 @@ export const NewSpacePage: React.FC = () => {
         throw new Error(err);
       }
       setInviteError(null);
-      const email = inviteEmail.trim();
-      return spacesApi.invite(createdSpaceId as number, email);
+      return spacesApi.invite(spaceId, inviteEmail.trim());
     },
     onSuccess: () => {
       setInviteEmail("");
-      queryClient.invalidateQueries({
-        queryKey: ["space-members", createdSpaceId],
-      });
+      queryClient.invalidateQueries({ queryKey: ["space-members", spaceId] });
     },
-    onError: (err: any) => {
-      setInviteError(err?.message || "Failed to add member");
-    },
+    onError: (err: any) =>
+      setInviteError(err?.message || "Failed to add member"),
   });
 
   const removeMutation = useMutation({
-    mutationFn: async (userId: number) => {
-      return spacesApi.removeMember(createdSpaceId as number, userId);
-    },
+    mutationFn: async (userId: number) =>
+      spacesApi.removeMember(spaceId, userId),
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["space-members", createdSpaceId],
-      });
+      queryClient.invalidateQueries({ queryKey: ["space-members", spaceId] });
     },
   });
 
-  const currentUserId = (user as any)?.id as number | undefined;
+  const members: SpaceMemberDto[] = membersData?.members || [];
+  const otherMembersCount = members.filter(
+    (m) => m.id !== currentUserId
+  ).length;
+  const finishLabel = otherMembersCount === 0 ? "Skip" : "Finish";
 
   return (
-    <StepsContainer steps={steps as any} currentStepId={currentStepId}>
-      <Step stepId="name">
-        <Typography variant="h3" className="mb-1 text-gray-900 font-bold">
-          Name Your Space
-        </Typography>
-        <Typography variant="small" className="mb-6 text-gray-600">
-          Choose a unique name for your space
-        </Typography>
+    <>
+      <Typography variant="h3" className="mb-1 text-gray-900 font-bold">
+        Invite Others
+      </Typography>
+      <Typography variant="small" className="mb-6 text-gray-600">
+        Add initial members to your space
+      </Typography>
 
-        {serverError && (
-          <div className="bg-red-50 text-red-700 px-3 py-2 rounded mb-4 text-sm">
-            {serverError}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <Input
-            {...register("name")}
-            label="Space Name"
-            error={!!errors.name}
-            helperText={errors.name?.message}
-            endAdornment={endAdornment}
-            autoFocus
-            required
-          />
-
-          <Input
-            {...register("description")}
-            label="Description"
-            error={!!errors.description}
-            helperText={errors.description?.message}
-          />
-
+      <Input
+        label="Member Email"
+        placeholder="name@example.com"
+        type="email"
+        value={inviteEmail}
+        onChange={(e) => setInviteEmail(e.target.value)}
+        onBlur={() => setInviteError(validateInviteEmail(inviteEmail))}
+        helperText={inviteError || undefined}
+        error={!!inviteError}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            inviteMutation.mutate();
+          }
+        }}
+        endAdornment={
           <Button
-            type="submit"
-            loading={isSubmitting}
-            disabled={nameStatus.state === "loading"}
-            className="md:min-w-40"
+            onClick={() => inviteMutation.mutate()}
+            loading={inviteMutation.isPending}
+            color="secondary"
+            variant="text"
+            size="sm"
           >
-            Create Space
+            <FontAwesomeIcon icon={faUserPlus} className="mr-2" />
+            Invite
           </Button>
-        </form>
+        }
+      />
+
+      <div className="mt-6">
+        <Typography
+          variant="small"
+          className="text-gray-700 font-semibold mb-2"
+        >
+          Members
+        </Typography>
+
+        {membersLoading ? (
+          <div className="py-6 text-center text-gray-500">
+            <Spinner className="h-5 w-5 inline-block mr-2" /> Loading members...
+          </div>
+        ) : membersError ? (
+          <div className="py-4 text-red-600 text-sm">
+            Failed to load members
+          </div>
+        ) : (
+          <ul className="divide-y divide-gray-200 border border-gray-200 rounded-lg overflow-hidden">
+            {members.map((m: SpaceMemberDto) => (
+              <li key={m.id} className="p-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="font-semibold text-gray-900 truncate">
+                      {m.firstName} {m.lastName}
+                    </div>
+                    <div className="text-xs text-gray-600 truncate">
+                      {m.email}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 shrink-0">
+                    <span
+                      className={
+                        m.role === "admin"
+                          ? "rounded px-1.5 py-0.5 text-xs font-medium bg-primary/10 text-primary"
+                          : "rounded px-1.5 py-0.5 text-xs font-medium bg-gray-100 text-gray-800"
+                      }
+                    >
+                      {m.role.charAt(0).toUpperCase() + m.role.slice(1)}
+                    </span>
+                    {currentUserId && m.id !== currentUserId ? (
+                      <Button
+                        variant="text"
+                        color="red"
+                        size="sm"
+                        onClick={() => removeMutation.mutate(m.id)}
+                      >
+                        <FontAwesomeIcon icon={faTrashCan} />
+                      </Button>
+                    ) : null}
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <div className="mt-6 flex justify-end">
+        <Button
+          variant="outlined"
+          color="primary"
+          className="md:min-w-40"
+          onClick={() => navigate("/my")}
+        >
+          {finishLabel}
+          <FontAwesomeIcon icon={faArrowRight} className="ml-2" />
+        </Button>
+      </div>
+    </>
+  );
+};
+
+export const NewSpacePage: React.FC = () => {
+  const [currentStepId, setCurrentStepId] = useState<StepId>("name");
+  const [createdSpaceId, setCreatedSpaceId] = useState<number | null>(null);
+  const { user } = useUserInfo();
+
+  return (
+    <StepsContainer steps={steps} currentStepId={currentStepId}>
+      <Step stepId="name">
+        <NameStep
+          onCreated={(id) => {
+            setCreatedSpaceId(id);
+            setCurrentStepId("invite");
+          }}
+        />
       </Step>
 
       <Step stepId="invite">
-        <Typography variant="h3" className="mb-1 text-gray-900 font-bold">
-          Invite Others
-        </Typography>
-        <Typography variant="small" className="mb-6 text-gray-600">
-          Add initial members to your space
-        </Typography>
-
-        <Input
-          label="Member Email"
-          placeholder="name@example.com"
-          type="email"
-          value={inviteEmail}
-          onChange={(e) => setInviteEmail(e.target.value)}
-          onBlur={() => setInviteError(validateInviteEmail(inviteEmail))}
-          helperText={inviteError || undefined}
-          error={!!inviteError}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              inviteMutation.mutate();
-            }
-          }}
-          endAdornment={
-            <Button
-              onClick={() => inviteMutation.mutate()}
-              loading={inviteMutation.isPending}
-              color="secondary"
-              variant="text"
-              size="sm"
-            >
-              <FontAwesomeIcon icon={faUserPlus} className="mr-2" />
-              Invite
-            </Button>
-          }
-        />
-
-        <div className="mt-6">
-          <Typography
-            variant="small"
-            className="text-gray-700 font-semibold mb-2"
-          >
-            Members
-          </Typography>
-
-          {membersLoading ? (
-            <div className="py-6 text-center text-gray-500">
-              <Spinner className="h-5 w-5 inline-block mr-2" /> Loading
-              members...
-            </div>
-          ) : membersError ? (
-            <div className="py-4 text-red-600 text-sm">
-              Failed to load members
-            </div>
-          ) : (
-            <ul className="divide-y divide-gray-200 border border-gray-200 rounded-lg overflow-hidden">
-              {(membersData?.members || []).map((m: SpaceMemberDto) => (
-                <li key={m.id} className="p-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="font-semibold text-gray-900 truncate">
-                        {m.firstName} {m.lastName}
-                      </div>
-                      <div className="text-xs text-gray-600 truncate">
-                        {m.email}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3 shrink-0">
-                      <span
-                        className={
-                          m.role === "admin"
-                            ? "rounded px-1.5 py-0.5 text-xs font-medium bg-primary/10 text-primary"
-                            : "rounded px-1.5 py-0.5 text-xs font-medium bg-gray-100 text-gray-800"
-                        }
-                      >
-                        {m.role.charAt(0).toUpperCase() + m.role.slice(1)}
-                      </span>
-                      {currentUserId && m.id !== currentUserId ? (
-                        <Button
-                          variant="text"
-                          color="red"
-                          size="sm"
-                          onClick={() => removeMutation.mutate(m.id)}
-                        >
-                          <FontAwesomeIcon icon={faTrashCan} />
-                        </Button>
-                      ) : null}
-                    </div>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        <div className="mt-6 flex justify-end">
-          <Button
-            variant="filled"
-            color="primary"
-            className="md:min-w-40"
-            onClick={() => {
-              navigate("/my");
-            }}
-          >
-            Finish
-            <FontAwesomeIcon icon={faArrowRight} className="ml-2" />
-          </Button>
-        </div>
+        {createdSpaceId ? (
+          <InviteStep spaceId={createdSpaceId} currentUserId={user?.id} />
+        ) : null}
       </Step>
     </StepsContainer>
   );

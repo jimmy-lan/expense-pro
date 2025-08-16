@@ -63,12 +63,50 @@ const StepsContainer: React.FC<StepsContainerProps> = ({
     <div className={`min-h-screen bg-white ${className}`}>
       <AppNavbar />
 
+      {/* Mobile: segmented progress bar */}
+      <div className="md:hidden px-4 pt-3">
+        <div className="flex items-center justify-between mb-2">
+          <div className="text-xs font-medium text-gray-600">
+            Step {Math.max(1, Math.min(currentIndex + 1, steps.length))} of{" "}
+            {steps.length}
+          </div>
+        </div>
+        <div
+          className="flex gap-1"
+          role="progressbar"
+          aria-valuemin={0}
+          aria-valuemax={steps.length}
+          aria-valuenow={Math.max(0, currentIndex)}
+          aria-label="Progress"
+        >
+          {steps.map((_, idx) => {
+            const isCompleted = idx < currentIndex; // previous steps
+            const isActive = idx === currentIndex; // current step
+            const isFirst = idx === 0;
+            const isLast = idx === steps.length - 1;
+            return (
+              <span
+                key={_.id ?? idx}
+                className={`${
+                  isCompleted
+                    ? "bg-primary"
+                    : isActive
+                    ? "bg-primary/60"
+                    : "bg-gray-200"
+                } h-1.5 flex-1 ${isFirst ? "rounded-l-full" : ""} ${
+                  isLast ? "rounded-r-full" : ""
+                }`}
+              />
+            );
+          })}
+        </div>
+      </div>
+
       {/* Desktop: responsive sidebar + content; Mobile: content only */}
       <div className="md:flex md:min-h-[calc(100vh-64px)]">
         {/* Left/progress column (desktop only) */}
         <aside className="hidden md:block bg-secondary/10 md:w-64 lg:w-72 xl:w-80 2xl:w-96 shrink-0">
           <div className="px-6 py-10">
-            {/* Back link */}
             <Button
               size="md"
               variant="text"
@@ -133,7 +171,7 @@ const StepsContainer: React.FC<StepsContainerProps> = ({
         </aside>
 
         {/* Right/content column - top aligned */}
-        <main className="flex-1 p-6 md:p-10 md:h-[calc(100vh-64px)] md:overflow-y-auto">
+        <main className="flex-1 p-6 py-10 md:px-10 md:py-12 md:h-[calc(100vh-64px)] md:overflow-y-auto">
           <div className="w-full max-w-xl mx-auto">{activeChild}</div>
         </main>
       </div>

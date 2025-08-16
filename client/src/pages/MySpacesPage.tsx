@@ -308,7 +308,7 @@ const MySpacesPage: React.FC = () => {
 
           {spacesQuery.isError && (
             <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-red-700">
-              {(spacesQuery.error as any)?.message || "Failed to load"}
+              {spacesQuery.error?.message || "Failed to load"}
             </div>
           )}
 
