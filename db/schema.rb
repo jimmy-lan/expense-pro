@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_08_09_072000) do
+ActiveRecord::Schema[8.0].define(version: 2025_08_09_080500) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -23,7 +23,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_09_072000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "max_members_per_space", null: false
+    t.integer "deleted_space_retention_hours", default: 4, null: false
     t.index ["key"], name: "index_plans_on_key", unique: true
+    t.check_constraint "deleted_space_retention_hours >= 0", name: "plans_deleted_space_retention_non_negative"
     t.check_constraint "max_members_per_space > 0", name: "plans_max_members_positive"
     t.check_constraint "max_spaces > 0", name: "plans_max_spaces_positive"
     t.check_constraint "max_transactions_per_space > 0", name: "plans_max_tx_positive"
@@ -49,8 +51,12 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_09_072000) do
     t.datetime "updated_at", null: false
     t.integer "transactions_count", default: 0, null: false
     t.string "description", limit: 200
+    t.datetime "deleted_at"
+    t.datetime "purge_after_at"
     t.index "lower((name)::text), created_by_id", name: "index_spaces_on_lower_name_and_created_by_id", unique: true
     t.index ["created_by_id"], name: "index_spaces_on_created_by_id"
+    t.index ["deleted_at"], name: "index_spaces_on_deleted_at"
+    t.index ["purge_after_at"], name: "index_spaces_on_purge_after_at"
   end
 
   create_table "transactions", force: :cascade do |t|

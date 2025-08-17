@@ -14,7 +14,18 @@ regular = Plan.find_or_create_by!(key: "regular") do |p|
   p.max_transactions_per_space = 500
   p.expires_after_days = 60
   p.max_members_per_space = 5
+  p.deleted_space_retention_hours = 4
 end
+
+# Ensure existing record has expected values
+regular.update_columns(
+  name: "Regular",
+  max_spaces: 20,
+  max_transactions_per_space: 500,
+  expires_after_days: 60,
+  max_members_per_space: 5,
+  deleted_space_retention_hours: 4
+)
 
 premium = Plan.find_or_create_by!(key: "premium") do |p|
   p.name = "Premium"
@@ -22,7 +33,17 @@ premium = Plan.find_or_create_by!(key: "premium") do |p|
   p.max_transactions_per_space = 10_000
   p.expires_after_days = nil
   p.max_members_per_space = 12
+  p.deleted_space_retention_hours = 720 # 30 days
 end
+
+premium.update_columns(
+  name: "Premium",
+  max_spaces: 50,
+  max_transactions_per_space: 10_000,
+  expires_after_days: nil,
+  max_members_per_space: 12,
+  deleted_space_retention_hours: 720
+)
 
 u1 = User.find_or_initialize_by(email: "user1.test@example.com")
 u1.password = "secret_test"

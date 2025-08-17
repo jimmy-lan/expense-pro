@@ -10,15 +10,17 @@ Rails.application.routes.draw do
       post   "login",  to: "sessions#create"
       delete "logout", to: "sessions#destroy"
 
-      resources :spaces, only: [ :index, :create ] do
+      resources :spaces, only: [ :index, :create, :destroy ] do
         collection do
           get :limits
           get :check_name
+          get :recently_deleted
         end
         member do
           post :invite
           get  :members
           delete :remove_member
+          delete :purge
         end
       end
     end

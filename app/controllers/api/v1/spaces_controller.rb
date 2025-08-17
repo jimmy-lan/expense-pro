@@ -9,7 +9,7 @@ class Api::V1::SpacesController < ApplicationController
     limit = [ [ params[:limit].to_i, 0 ].max, 50 ].min rescue 20
     limit = 20 if limit.zero?
 
-    base_scope = spaces_scope_for_filter(filter)
+    base_scope = spaces_scope_for_filter(filter).active
 
     # Use last activity time: latest transaction time, or space creation time if no transactions
     last_tx_expr = last_activity_expr_sql
@@ -47,10 +47,12 @@ class Api::V1::SpacesController < ApplicationController
 
   def limits
     plan = current_user.plan
+    # Count includes spaces pending deletion to avoid loopholes
+    created_spaces_count = current_user.created_spaces_count
     render json: {
       maxSpaces: plan.max_spaces,
-      createdSpacesCount: current_user.created_spaces_count,
-      canCreateMore: current_user.created_spaces_count < plan.max_spaces
+      createdSpacesCount: created_spaces_count,
+      canCreateMore: created_spaces_count < plan.max_spaces
     }
   end
 
@@ -102,8 +104,8 @@ class Api::V1::SpacesController < ApplicationController
 
   # Invite a user by email to a space where the current user is an admin.
   def invite
-    admin_membership = SpaceMembership.includes(:space).where(space_id: params[:id], user_id: current_user.id, role: "admin").first
-    unless admin_membership
+    admin_membership = SpaceMembership.includes(:space).find_by(space_id: params[:id], user_id: current_user.id, role: "admin")
+    unless admin_membership && admin_membership.space.deleted_at.nil?
       render json: { error: "Space not found" }, status: :not_found
       return
     end
@@ -134,6 +136,11 @@ class Api::V1::SpacesController < ApplicationController
         # Lock the space row to prevent concurrent capacity checks
         space.reload.lock!
 
+        if space.deleted_at.present?
+          error_message = :not_found
+          raise ActiveRecord::Rollback
+        end
+
         current_member_count = SpaceMembership.where(space_id: space.id).count
         max_allowed = space.max_members_allowed
         if current_member_count >= max_allowed
@@ -157,7 +164,11 @@ class Api::V1::SpacesController < ApplicationController
     end
 
     if error_message.present?
-      render json: { error: error_message }, status: :unprocessable_entity
+      if error_message == :not_found
+        render json: { error: "Space not found" }, status: :not_found
+      else
+        render json: { error: error_message }, status: :unprocessable_entity
+      end
       return
     end
 
@@ -177,8 +188,8 @@ class Api::V1::SpacesController < ApplicationController
 
   # List all members of a space visible to the current user (must be a member of that space)
   def members
-    membership = SpaceMembership.where(space_id: params[:id], user_id: current_user.id).first
-    unless membership
+    membership = SpaceMembership.includes(:space).find_by(space_id: params[:id], user_id: current_user.id)
+    unless membership && membership.space.deleted_at.nil?
       render json: { error: "Space not found" }, status: :not_found
       return
     end
@@ -200,8 +211,8 @@ class Api::V1::SpacesController < ApplicationController
 
   # Remove a member from a space (admin only). Current user cannot remove themself.
   def remove_member
-    admin_membership = SpaceMembership.where(space_id: params[:id], user_id: current_user.id, role: "admin").first
-    unless admin_membership
+    admin_membership = SpaceMembership.includes(:space).find_by(space_id: params[:id], user_id: current_user.id, role: "admin")
+    unless admin_membership && admin_membership.space.deleted_at.nil?
       render json: { error: "Space not found" }, status: :not_found
       return
     end
@@ -220,6 +231,72 @@ class Api::V1::SpacesController < ApplicationController
 
     membership.destroy!
     render json: { success: true }
+  end
+
+  # Soft-delete a space. Only the owner (creator) can delete.
+  def destroy
+    space = Space.active.where(id: params[:id], created_by_id: current_user.id).first
+    unless space
+      render json: { error: "Space not found" }, status: :not_found
+      return
+    end
+
+    space.soft_delete!(deleted_by: current_user)
+
+    render json: { success: true, deletedAt: space.deleted_at, purgeAfterAt: space.purge_after_at }
+  rescue ActiveRecord::RecordInvalid => e
+    render json: { errors: [ e.record.errors.full_messages.presence || e.message ].flatten }, status: :unprocessable_entity
+  end
+
+  # Permanently delete a previously deleted space (owner only)
+  def purge
+    space = Space.recently_deleted.where(id: params[:id], created_by_id: current_user.id).first
+    unless space
+      render json: { error: "Space not found" }, status: :not_found
+      return
+    end
+
+    Space.transaction do
+      space.reload.lock!
+      # Ensure still deleted after locking
+      unless space.deleted_at.present?
+        render json: { error: "Space not found" }, status: :not_found
+        raise ActiveRecord::Rollback
+      end
+      space.destroy!
+    end
+
+    head :no_content
+  rescue ActiveRecord::RecordNotFound
+    render json: { error: "Space not found" }, status: :not_found
+  end
+
+  # List recently deleted spaces owned by the current user, ordered by deleted_at desc
+  def recently_deleted
+    limit = [ [ params[:limit].to_i, 0 ].max, 50 ].min rescue 20
+    limit = 20 if limit.zero?
+
+    scoped = Space.where(created_by_id: current_user.id).recently_deleted
+
+    order_sql = "spaces.deleted_at DESC NULLS LAST, spaces.id ASC"
+
+    if (raw_cursor = params[:cursor]).present?
+      cursor = decode_recently_deleted_cursor(raw_cursor)
+      scoped = apply_recently_deleted_cursor(scoped, cursor) if recently_deleted_cursor_valid?(cursor)
+    end
+
+    records = scoped.order(order_sql).limit(limit + 1)
+
+    has_more = records.length > limit
+    records = records.first(limit)
+
+    last_cursor = records.last ? encode_recently_deleted_cursor(records.last) : nil
+
+    render json: {
+      spaces: records.map { |s| serialize_deleted_space(s) },
+      lastCursor: last_cursor,
+      hasMore: has_more
+    }
   end
 
   private
@@ -312,6 +389,47 @@ class Api::V1::SpacesController < ApplicationController
       transactionsCount: space.transactions_count,
       lastTransactionAt: space.attributes["last_transaction_at"]
     }
+  end
+
+  def serialize_deleted_space(space)
+    {
+      id: space.id,
+      name: space.name,
+      deletedAt: space.deleted_at,
+      purgeAfterAt: space.purge_after_at
+    }
+  end
+
+  def encode_recently_deleted_cursor(space)
+    payload = {
+      deleted_at: space.deleted_at,
+      id: space.id
+    }
+    Base64.urlsafe_encode64(payload.to_json)
+  end
+
+  def decode_recently_deleted_cursor(encoded)
+    JSON.parse(Base64.urlsafe_decode64(encoded))
+  rescue
+    nil
+  end
+
+  def recently_deleted_cursor_valid?(cursor)
+    cursor.is_a?(Hash) && cursor.key?("deleted_at") && cursor.key?("id")
+  end
+
+  def apply_recently_deleted_cursor(scope, cursor)
+    deleted_at = cursor["deleted_at"]
+    id = cursor["id"]
+
+    predicate = ActiveRecord::Base.send(:sanitize_sql_array, [
+      <<~SQL.squish,
+        (spaces.deleted_at < ? OR (spaces.deleted_at = ? AND spaces.id > ?))
+      SQL
+      deleted_at, deleted_at, id
+    ])
+
+    scope.where(predicate)
   end
 
   def send_invite_email(to_email, space_name)
