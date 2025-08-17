@@ -186,6 +186,8 @@ export const StandardSpacesList: React.FC<{
         </div>
       )}
 
+      <div className="py-14" />
+
       {/* Bottom drawer for bulk actions */}
       <div
         className={

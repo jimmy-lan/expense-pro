@@ -58,6 +58,7 @@ const NameStep: React.FC<NameStepProps> = ({ onCreated }) => {
     | { state: "available" }
     | { state: "unavailable"; message: string }
   >({ state: "idle" });
+  const queryClient = useQueryClient();
 
   const {
     register,
@@ -131,6 +132,7 @@ const NameStep: React.FC<NameStepProps> = ({ onCreated }) => {
         name: values.name.trim(),
         description: values.description?.trim() || null,
       });
+      queryClient.invalidateQueries({ queryKey: ["spaces"] });
       onCreated(res.space.id);
     } catch (err: any) {
       setServerError(err?.message || "Failed to create space");
@@ -360,11 +362,11 @@ const InviteStep: React.FC<InviteStepProps> = ({ spaceId, currentUserId }) => {
           variant="outlined"
           color="primary"
           className="md:min-w-40"
-          onClick={() =>
+          onClick={async () => {
             navigate(
               state?.tab ? `/my?tab=${encodeURIComponent(state?.tab)}` : "/my"
-            )
-          }
+            );
+          }}
         >
           {finishLabel}
           <FontAwesomeIcon icon={faArrowRight} className="ml-2" />
