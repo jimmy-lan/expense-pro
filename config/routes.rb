@@ -15,6 +15,7 @@ Rails.application.routes.draw do
           get :limits
           get :check_name
           get :recently_deleted
+          delete :bulk_delete
         end
         member do
           post :invite

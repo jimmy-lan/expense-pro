@@ -16,7 +16,7 @@ import { Input, TextArea } from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
 import { spacesApi, SpaceMemberDto } from "../../lib/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useUserInfo } from "../../hooks";
 
 const steps = [
@@ -50,6 +50,7 @@ interface NameStepProps {
 
 const NameStep: React.FC<NameStepProps> = ({ onCreated }) => {
   const navigate = useNavigate();
+  const { state } = useLocation();
   const [serverError, setServerError] = useState<string | null>(null);
   const [nameStatus, setNameStatus] = useState<
     | { state: "idle" }
@@ -182,7 +183,11 @@ const NameStep: React.FC<NameStepProps> = ({ onCreated }) => {
             variant="text"
             className="md:min-w-30"
             color="gray"
-            onClick={() => navigate("/my")}
+            onClick={() =>
+              navigate(
+                state?.tab ? `/my?tab=${encodeURIComponent(state.tab)}` : "/my"
+              )
+            }
           >
             Cancel
           </Button>
@@ -200,6 +205,7 @@ interface InviteStepProps {
 
 const InviteStep: React.FC<InviteStepProps> = ({ spaceId, currentUserId }) => {
   const navigate = useNavigate();
+  const { state } = useLocation();
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteError, setInviteError] = useState<string | null>(null);
   const queryClient = useQueryClient();
@@ -354,7 +360,11 @@ const InviteStep: React.FC<InviteStepProps> = ({ spaceId, currentUserId }) => {
           variant="outlined"
           color="primary"
           className="md:min-w-40"
-          onClick={() => navigate("/my")}
+          onClick={() =>
+            navigate(
+              state?.tab ? `/my?tab=${encodeURIComponent(state?.tab)}` : "/my"
+            )
+          }
         >
           {finishLabel}
           <FontAwesomeIcon icon={faArrowRight} className="ml-2" />

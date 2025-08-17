@@ -1,4 +1,4 @@
 export * from "./HomePage";
 export * from "./auth";
-export * from "./MySpacesPage";
+export * from "./MySpaces";
 export * from "./spaces";

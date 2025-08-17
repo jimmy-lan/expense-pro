@@ -59,7 +59,7 @@ class Api::V1::SpacesController < ApplicationController
   def create
     plan = current_user.plan
     if current_user.created_spaces_count >= plan.max_spaces
-      render json: { error: "You have reached the maximum number of spaces for your plan." }, status: :unprocessable_entity
+      render json: { error: "You have reached the maximum number of spaces for your plan." }, status: :unprocessable_content
       return
     end
 
@@ -74,10 +74,10 @@ class Api::V1::SpacesController < ApplicationController
         SpaceMembership.create!(user: current_user, space: space, role: "admin")
       end
     rescue ActiveRecord::RecordInvalid => e
-      render json: { errors: space.errors.full_messages.presence || [ e.record.errors.full_messages.presence || e.message ].flatten }, status: :unprocessable_entity
+      render json: { errors: space.errors.full_messages.presence || [ e.record.errors.full_messages.presence || e.message ].flatten }, status: :unprocessable_content
       return
     rescue ActiveRecord::RecordNotUnique
-      render json: { errors: [ "Name has already been taken" ] }, status: :unprocessable_entity
+      render json: { errors: [ "Name has already been taken。" ] }, status: :unprocessable_content
       return
     end
 
@@ -86,7 +86,8 @@ class Api::V1::SpacesController < ApplicationController
         id: space.id,
         name: space.name,
         description: space.description,
-        createdAt: space.created_at
+        createdAt: space.created_at,
+        colorHex: space.color_hex
       }
     }, status: :created
   end
@@ -113,18 +114,18 @@ class Api::V1::SpacesController < ApplicationController
 
     invitee_email = params[:email].to_s.strip.downcase
     if invitee_email.blank?
-      render json: { error: "Email is required" }, status: :unprocessable_entity
+      render json: { error: "Email is required" }, status: :unprocessable_content
       return
     end
 
     invitee = User.where("LOWER(email) = ?", invitee_email).first
     unless invitee
-      render json: { error: "The user to invite does not exist in the system." }, status: :unprocessable_entity
+      render json: { error: "The user to invite does not exist in the system." }, status: :unprocessable_content
       return
     end
 
     if invitee.id == current_user.id
-      render json: { error: "You cannot invite yourself." }, status: :unprocessable_entity
+      render json: { error: "You cannot invite yourself." }, status: :unprocessable_content
       return
     end
 
@@ -157,7 +158,7 @@ class Api::V1::SpacesController < ApplicationController
         SpaceMembership.create!(user: invitee, space: space, role: "member")
       end
     rescue ActiveRecord::RecordInvalid => e
-      render json: { errors: [ e.record.errors.full_messages.presence || e.message ].flatten }, status: :unprocessable_entity
+      render json: { errors: [ e.record.errors.full_messages.presence || e.message ].flatten }, status: :unprocessable_content
       return
     rescue ActiveRecord::RecordNotUnique
       already_member = true
@@ -167,7 +168,7 @@ class Api::V1::SpacesController < ApplicationController
       if error_message == :not_found
         render json: { error: "Space not found" }, status: :not_found
       else
-        render json: { error: error_message }, status: :unprocessable_entity
+        render json: { error: error_message }, status: :unprocessable_content
       end
       return
     end
@@ -209,30 +210,6 @@ class Api::V1::SpacesController < ApplicationController
     }
   end
 
-  # Remove a member from a space (admin only). Current user cannot remove themself.
-  def remove_member
-    admin_membership = SpaceMembership.includes(:space).find_by(space_id: params[:id], user_id: current_user.id, role: "admin")
-    unless admin_membership && admin_membership.space.deleted_at.nil?
-      render json: { error: "Space not found" }, status: :not_found
-      return
-    end
-
-    target_user_id = params[:user_id].to_i
-    if target_user_id == current_user.id
-      render json: { error: "You cannot remove yourself." }, status: :unprocessable_entity
-      return
-    end
-
-    membership = SpaceMembership.where(space_id: admin_membership.space_id, user_id: target_user_id).first
-    unless membership
-      render json: { error: "Member not found" }, status: :not_found
-      return
-    end
-
-    membership.destroy!
-    render json: { success: true }
-  end
-
   # Soft-delete a space. Only the owner (creator) can delete.
   def destroy
     space = Space.active.where(id: params[:id], created_by_id: current_user.id).first
@@ -245,7 +222,35 @@ class Api::V1::SpacesController < ApplicationController
 
     render json: { success: true, deletedAt: space.deleted_at, purgeAfterAt: space.purge_after_at }
   rescue ActiveRecord::RecordInvalid => e
-    render json: { errors: [ e.record.errors.full_messages.presence || e.message ].flatten }, status: :unprocessable_entity
+    render json: { errors: [ e.record.errors.full_messages.presence || e.message ].flatten }, status: :unprocessable_content
+  end
+
+  # Bulk soft-delete spaces. Only deletes spaces owned by the current user.
+  def bulk_delete
+    ids = params[:ids]
+    ids = ids.is_a?(Array) ? ids.map(&:to_i).uniq : []
+    if ids.empty?
+      render json: { error: "No ids provided" }, status: :unprocessable_content
+      return
+    end
+
+    # Limit to avoid excessive payloads
+    ids = ids.first(50)
+
+    owned_spaces = Space.active.where(id: ids, created_by_id: current_user.id)
+    deleted_ids = []
+    Space.transaction do
+      owned_spaces.each do |space|
+        space.soft_delete!(deleted_by: current_user)
+        deleted_ids << space.id
+      end
+    end
+
+    skipped_ids = ids - deleted_ids
+
+    render json: { deleted: deleted_ids, skipped: skipped_ids }
+  rescue ActiveRecord::RecordInvalid => e
+    render json: { errors: [ e.record.errors.full_messages.presence || e.message ].flatten }, status: :unprocessable_content
   end
 
   # Permanently delete a previously deleted space (owner only)
@@ -384,10 +389,13 @@ class Api::V1::SpacesController < ApplicationController
       id: space.id,
       name: space.name,
       createdAt: space.created_at,
+      createdById: space.created_by_id,
       createdByName: creator_full_name,
+      createdByAvatarUrl: space.created_by&.avatar_url,
       role: role,
       transactionsCount: space.transactions_count,
-      lastTransactionAt: space.attributes["last_transaction_at"]
+      lastTransactionAt: space.attributes["last_transaction_at"],
+      colorHex: space.color_hex
     }
   end
 

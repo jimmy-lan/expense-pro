@@ -7,6 +7,7 @@ import {
   MySpacesPage,
   SignoutConfirmPage,
   NewSpacePage,
+  DeleteSpacesPage,
 } from "./pages";
 
 function App() {
@@ -18,6 +19,7 @@ function App() {
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/my" element={<MySpacesPage />} />
         <Route path="/spaces/new" element={<NewSpacePage />} />
+        <Route path="/spaces/delete" element={<DeleteSpacesPage />} />
         <Route path="/logout/confirm" element={<SignoutConfirmPage />} />
       </Routes>
     </Router>

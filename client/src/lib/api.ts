@@ -33,9 +33,17 @@ export async function apiFetch<TResponse>(
     : await res.text().catch(() => "");
 
   if (!res.ok) {
-    const message =
-      (isJson ? (body as any)?.error : String(body)) ||
-      `Request failed with status ${res.status}`;
+    // Try to provide a specific message if the API returned structured errors
+    let message = `Request failed with status ${res.status}`;
+    if (isJson) {
+      const b = body as any;
+      if (b?.error && typeof b.error === "string") message = b.error;
+      else if (Array.isArray(b?.errors) && b.errors.length > 0) {
+        message = String(b.errors[0]);
+      }
+    } else if (typeof body === "string" && body.trim().length > 0) {
+      message = body as string;
+    }
     throw new ApiError(message, res.status, body);
   }
 
@@ -80,10 +88,13 @@ export interface SpaceDto {
   id: number;
   name: string;
   createdAt: string;
+  createdById: number;
   createdByName: string;
+  createdByAvatarUrl?: string | null;
   role?: "member" | "admin" | null;
   transactionsCount: number;
   lastTransactionAt: string | null;
+  colorHex?: string | null;
 }
 export interface SpacesResponse {
   spaces: SpaceDto[];
@@ -97,6 +108,18 @@ export interface SpaceMemberDto {
   firstName: string;
   lastName: string;
   role: "member" | "admin";
+}
+
+export interface DeletedSpaceDto {
+  id: number;
+  name: string;
+  deletedAt: string;
+  purgeAfterAt: string;
+}
+export interface RecentlyDeletedSpacesResponse {
+  spaces: DeletedSpaceDto[];
+  lastCursor: string | null;
+  hasMore: boolean;
 }
 
 export const spacesApi = {
@@ -120,6 +143,7 @@ export const spacesApi = {
         name: string;
         description?: string | null;
         createdAt: string;
+        colorHex?: string | null;
       };
     }>(`/api/v1/spaces`, {
       method: "POST",
@@ -152,5 +176,23 @@ export const spacesApi = {
     url.searchParams.set("user_id", String(userId));
     const path = url.toString().replace(window.location.origin, "");
     return apiFetch<{ success: boolean }>(path, { method: "DELETE" });
+  },
+  recentlyDeleted: async (params: { cursor?: string | null }) => {
+    const url = new URL(
+      `/api/v1/spaces/recently_deleted`,
+      window.location.origin
+    );
+    if (params.cursor) url.searchParams.set("cursor", params.cursor);
+    const path = url.toString().replace(window.location.origin, "");
+    return apiFetch<RecentlyDeletedSpacesResponse>(path, { method: "GET" });
+  },
+  bulkDelete: async (ids: number[]) => {
+    return apiFetch<{ deleted: number[]; skipped: number[] }>(
+      `/api/v1/spaces/bulk_delete`,
+      {
+        method: "DELETE",
+        body: JSON.stringify({ ids }),
+      }
+    );
   },
 };

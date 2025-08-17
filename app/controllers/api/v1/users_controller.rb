@@ -5,7 +5,7 @@ class Api::V1::UsersController < ApplicationController
       set_login_cookie(user)
       render json: { user: serialize_user(user) }, status: :created
     else
-      render json: { errors: user.errors.full_messages }, status: :unprocessable_entity
+      render json: { errors: user.errors.full_messages }, status: :unprocessable_content
     end
   end
 
