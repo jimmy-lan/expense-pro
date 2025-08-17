@@ -304,6 +304,18 @@ class Api::V1::SpacesController < ApplicationController
     }
   end
 
+  # Displaying single space details
+  def show
+    membership = SpaceMembership.includes(:space).find_by(space_id: params[:id], user_id: current_user.id)
+    space = membership&.space
+    unless space && space.deleted_at.nil?
+      render json: { error: "Space not found" }, status: :not_found
+      return
+    end
+
+    render json: { space: serialize_space(space) }
+  end
+
   private
 
   def spaces_scope_for_filter(filter)
@@ -395,7 +407,8 @@ class Api::V1::SpacesController < ApplicationController
       role: role,
       transactionsCount: space.transactions_count,
       lastTransactionAt: space.attributes["last_transaction_at"],
-      colorHex: space.color_hex
+      colorHex: space.color_hex,
+      description: space.description
     }
   end
 

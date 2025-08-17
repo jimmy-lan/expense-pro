@@ -13,5 +13,6 @@ class CreateTransactions < ActiveRecord::Migration[8.0]
 
     add_check_constraint :transactions, "amount ~ '^[0-9]+(\\.[0-9]{1,2})?$'", name: "transactions_amount_decimal_string"
     add_index :transactions, [ :space_id, :occurred_at ], name: "index_transactions_on_space_and_occurred_at"
+    add_index :transactions, [ :space_id, :occurred_at, :created_at, :id ], name: "index_transactions_on_space_and_occurred_at_and_created_at_and_id"
   end
 end

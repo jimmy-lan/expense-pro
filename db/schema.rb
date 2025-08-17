@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_08_09_090000) do
+ActiveRecord::Schema[8.0].define(version: 2025_08_09_090600) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -69,12 +69,13 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_09_090000) do
     t.bigint "creator_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "full_cover", default: false, null: false
     t.index ["creator_id"], name: "index_transactions_on_creator_id"
     t.index ["space_id", "created_at"], name: "index_transactions_on_space_and_created_at"
     t.index ["space_id", "occurred_at", "id"], name: "index_transactions_on_space_and_occurred_at_and_id"
     t.index ["space_id", "occurred_at"], name: "index_transactions_on_space_and_occurred_at"
     t.index ["space_id"], name: "index_transactions_on_space_id"
-    t.check_constraint "amount::text ~ '^[0-9]+(\\.[0-9]{1,2})?$'::text", name: "transactions_amount_decimal_string"
+    t.check_constraint "amount::text ~ '^[-]?[0-9]+(\\.[0-9]{1,2})?$'::text", name: "transactions_amount_decimal_string"
   end
 
   create_table "users", force: :cascade do |t|

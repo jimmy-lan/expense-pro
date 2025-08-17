@@ -10,7 +10,7 @@ Rails.application.routes.draw do
       post   "login",  to: "sessions#create"
       delete "logout", to: "sessions#destroy"
 
-      resources :spaces, only: [ :index, :create, :destroy ] do
+      resources :spaces, only: [ :index, :create, :destroy, :show ] do
         collection do
           get :limits
           get :check_name
@@ -23,6 +23,8 @@ Rails.application.routes.draw do
           delete :remove_member
           delete :purge
         end
+
+        resources :transactions, only: [ :index, :create, :show, :destroy ]
       end
     end
   end

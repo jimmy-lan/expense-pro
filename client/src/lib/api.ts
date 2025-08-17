@@ -95,6 +95,7 @@ export interface SpaceDto {
   transactionsCount: number;
   lastTransactionAt: string | null;
   colorHex?: string | null;
+  description?: string | null;
 }
 export interface SpacesResponse {
   spaces: SpaceDto[];
@@ -193,6 +194,70 @@ export const spacesApi = {
         method: "DELETE",
         body: JSON.stringify({ ids }),
       }
+    );
+  },
+  show: async (spaceId: number) => {
+    return apiFetch<{ space: SpaceDto }>(`/api/v1/spaces/${spaceId}`, {
+      method: "GET",
+    });
+  },
+};
+
+// Transactions endpoints
+export interface TransactionDto {
+  id: number;
+  title: string;
+  description?: string | null;
+  amount: string; // signed decimal string
+  occurredAt: string; // ISO
+  createdAt: string; // ISO
+  creator: { id: number; name: string; avatarUrl?: string | null };
+  fullCover: boolean;
+}
+export interface TransactionsResponse {
+  transactions: TransactionDto[];
+  lastCursor: string | null;
+  hasMore: boolean;
+}
+
+export const transactionsApi = {
+  list: async (spaceId: number, params: { cursor?: string | null } = {}) => {
+    const url = new URL(
+      `/api/v1/spaces/${spaceId}/transactions`,
+      window.location.origin
+    );
+    if (params.cursor) url.searchParams.set("cursor", params.cursor);
+    const path = url.toString().replace(window.location.origin, "");
+    return apiFetch<TransactionsResponse>(path, { method: "GET" });
+  },
+  create: async (
+    spaceId: number,
+    payload: {
+      title: string;
+      description?: string | null;
+      amount: string; // send signed string
+      occurred_at: string; // ISO date or datetime
+      full_cover?: boolean;
+    }
+  ) => {
+    return apiFetch<{ transaction: TransactionDto }>(
+      `/api/v1/spaces/${spaceId}/transactions`,
+      {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }
+    );
+  },
+  show: async (spaceId: number, id: number) => {
+    return apiFetch<{ transaction: TransactionDto }>(
+      `/api/v1/spaces/${spaceId}/transactions/${id}`,
+      { method: "GET" }
+    );
+  },
+  delete: async (spaceId: number, id: number) => {
+    return apiFetch<{ deleted: boolean }>(
+      `/api/v1/spaces/${spaceId}/transactions/${id}`,
+      { method: "DELETE" }
     );
   },
 };

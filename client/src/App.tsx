@@ -8,7 +8,10 @@ import {
   SignoutConfirmPage,
   NewSpacePage,
   DeleteSpacesPage,
+  NewTransactionPage,
+  DeleteTransactionPage,
 } from "./pages";
+import { SpacePage } from "./pages/spaces/SpacePage";
 
 function App() {
   return (
@@ -18,6 +21,15 @@ function App() {
         <Route path="/login" element={<SigninPage />} />
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/my" element={<MySpacesPage />} />
+        <Route path="/my/space/:spaceId" element={<SpacePage />} />
+        <Route
+          path="/my/space/:spaceId/transactions/new"
+          element={<NewTransactionPage />}
+        />
+        <Route
+          path="/my/space/:spaceId/transactions/:transactionId/delete"
+          element={<DeleteTransactionPage />}
+        />
         <Route path="/spaces/new" element={<NewSpacePage />} />
         <Route path="/spaces/delete" element={<DeleteSpacesPage />} />
         <Route path="/logout/confirm" element={<SignoutConfirmPage />} />
