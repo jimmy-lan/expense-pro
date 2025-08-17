@@ -127,7 +127,7 @@ export const TextArea = React.forwardRef<NativeMTTextareaRef, AppTextareaProps>(
             variant="standard"
             size={size}
             placeholder={placeholder || " "}
-            className={twMerge("!px-4 !border-none", className)}
+            className={twMerge("!px-4 pt-6 !border-none", className)}
             containerProps={{
               className: twMerge(
                 BASE_CONTAINER_CLASSES,
