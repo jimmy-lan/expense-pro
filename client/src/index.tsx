@@ -33,57 +33,57 @@ root.render(
 reportWebVitals();
 
 if (process.env.NODE_ENV === "production" && "serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker
-      .register(`${process.env.PUBLIC_URL}/service-worker.js`)
-      .then((registration) => {
-        if (registration.waiting) {
-          registration.waiting.postMessage({ type: "SKIP_WAITING" });
+  (async () => {
+    const BUILD =
+      (import.meta as any).env?.VITE_BUILD_HASH ||
+      process.env.REACT_APP_BUILD_HASH ||
+      Date.now().toString();
+    const swUrl = `/service-worker.js?v=${BUILD}`;
+
+    // One-time cleanup: unregister workers with a different scriptURL (avoid multiple SWs controlling).
+    try {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      for (const r of regs) {
+        if (!r.scriptURL.endsWith(`/service-worker.js?v=${BUILD}`)) {
+          // Keep the current registration; remove legacy ones.
+          // If you have only one SW path historically, you can remove this block.
+          // await r.unregister();
         }
+      }
+    } catch {}
 
-        registration.addEventListener("updatefound", () => {
-          const newWorker = registration.installing;
-          if (!newWorker) return;
+    const registration = await navigator.serviceWorker.register(swUrl, {
+      // Ensure the SW and any importScripts are not served from the HTTP cache
+      updateViaCache: "none",
+      // Optional: set scope if your app isn't at the origin root
+      // scope: "/",
+    });
 
-          newWorker.addEventListener("statechange", () => {
-            if (
-              newWorker.state === "installed" &&
-              navigator.serviceWorker.controller
-            ) {
-              registration.waiting?.postMessage({ type: "SKIP_WAITING" });
-            }
-          });
+    // Auto-reload when the newly activated SW takes control
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (refreshing) return;
+      refreshing = true;
+      window.location.reload();
+    });
 
-          // Encourage immediate activation for newly installing worker
-          try {
-            newWorker.postMessage({ type: "SKIP_WAITING" });
-          } catch {}
-        });
+    // If an update is already waiting, activate it
+    if (registration.waiting) {
+      registration.waiting.postMessage({ type: "SKIP_WAITING" });
+    }
 
-        let refreshing = false;
-        navigator.serviceWorker.addEventListener("controllerchange", () => {
-          if (refreshing) return;
-          refreshing = true;
-          window.location.reload();
-        });
+    // When a new worker is found, activate it as soon as it reaches 'installed'
+    registration.addEventListener("updatefound", () => {
+      const nw = registration.installing;
+      if (!nw) return;
+      nw.addEventListener("statechange", () => {
+        if (nw.state === "installed" && navigator.serviceWorker.controller) {
+          registration.waiting?.postMessage({ type: "SKIP_WAITING" });
+        }
+      });
+    });
 
-        // Periodically ask the browser to check for SW update without forcing asset refetches.
-        // Browsers already revalidate based on HTTP caching; this only checks the SW script.
-        const TWELVE_HOURS = 12 * 60 * 60 * 1000;
-        let lastUpdateCheck = 0;
-
-        const maybeCheckForUpdate = () => {
-          const now = Date.now();
-          if (now - lastUpdateCheck < 60 * 1000) return; // throttle within a minute
-          lastUpdateCheck = now;
-          registration.update().catch(() => {});
-        };
-
-        // Initial check shortly after load to reduce first-load staleness
-        setTimeout(maybeCheckForUpdate, 5 * 1000);
-        // Recurring check every 12 hours while a tab is open
-        setInterval(maybeCheckForUpdate, TWELVE_HOURS);
-      })
-      .catch(() => {});
-  });
+    // Lightweight periodic SW update checks while a tab stays open
+    setInterval(() => registration.update().catch(() => {}), 60 * 60 * 1000);
+  })();
 }
