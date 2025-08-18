@@ -1,36 +1,36 @@
 /* eslint-disable */
 
-const CACHE_NAME = "expense-share-cache-v1";
-const APP_SHELL = ["/index.html", "/manifest.json"];
+// Bump this per release OR inject a build hash from your bundler.
+const CACHE = "expense-share-v2025-08-17";
 
-self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL))
-  );
+self.addEventListener("install", () => {
+  // Make the new SW take control ASAP
+  self.skipWaiting();
 });
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     (async () => {
-      try {
-        if (self.registration && "navigationPreload" in self.registration) {
-          await self.registration.navigationPreload.enable();
-        }
-      } catch (_) {}
-
+      // Remove old caches
       const keys = await caches.keys();
       await Promise.all(
-        keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))
+        keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))
       );
+
+      // Optional: navigation preload can speed first paint
+      try {
+        if ("navigationPreload" in self.registration) {
+          await self.registration.navigationPreload.enable();
+        }
+      } catch {}
+
       await self.clients.claim();
     })()
   );
 });
 
 self.addEventListener("message", (event) => {
-  if (event && event.data && event.data.type === "SKIP_WAITING") {
-    self.skipWaiting();
-  }
+  if (event?.data?.type === "SKIP_WAITING") self.skipWaiting();
 });
 
 self.addEventListener("fetch", (event) => {
@@ -38,64 +38,74 @@ self.addEventListener("fetch", (event) => {
   if (request.method !== "GET") return;
 
   const url = new URL(request.url);
+  if (url.origin !== location.origin) return; // ignore cross-origin
+  if (/^\/api\b/.test(url.pathname)) return; // let API go to network
 
-  // Ignore calls to external origins and API endpoints
-  if (url.origin !== self.location.origin) return;
-  if (/^\/api\b/.test(url.pathname)) return;
-
-  // App Shell-style routing for navigations
-  if (request.mode === "navigate") {
-    event.respondWith(
-      (async () => {
-        try {
-          const preloadResponse = await event.preloadResponse;
-          if (preloadResponse) return preloadResponse;
-          return await fetch(request);
-        } catch (e) {
-          return await caches.match("/index.html");
-        }
-      })()
-    );
+  // 1) HTML / navigations: always network-first so UI updates immediately
+  const isHTMLNav =
+    request.mode === "navigate" ||
+    request.headers.get("accept")?.includes("text/html");
+  if (isHTMLNav) {
+    event.respondWith(networkFirstHTML(event));
     return;
   }
 
-  // Cache-first for static assets; network-first for others
-  if (/\.(?:js|css|png|jpg|jpeg|gif|svg|webp|ico|json)$/i.test(url.pathname)) {
-    event.respondWith(
-      caches.match(request).then((cached) => {
-        const fetchAndCache = fetch(request).then((response) => {
-          const cacheControl = response.headers.get("Cache-Control") || "";
-          if (
-            response &&
-            response.ok &&
-            response.type === "basic" &&
-            !/no-store/i.test(cacheControl)
-          ) {
-            const copy = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
-          }
-          return response;
-        });
-        return cached || fetchAndCache;
-      })
+  // 2) Versioned static assets (immutable): cache-first
+  const isHashed =
+    /\.[0-9a-f]{8,}\.(?:js|css|png|jpg|jpeg|gif|svg|webp|ico)$/i.test(
+      url.pathname
     );
-  } else {
-    event.respondWith(
-      fetch(request)
-        .then((response) => {
-          const cacheControl = response.headers.get("Cache-Control") || "";
-          if (
-            response &&
-            response.ok &&
-            response.type === "basic" &&
-            !/no-store/i.test(cacheControl)
-          ) {
-            const copy = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
-          }
-          return response;
-        })
-        .catch(() => caches.match(request))
-    );
+  if (isHashed) {
+    event.respondWith(cacheFirst(request));
+    return;
+  }
+
+  // 3) Other same-origin static: network-first with revalidate
+  if (
+    /\.(?:js|css|png|jpg|jpeg|gif|svg|webp|ico|json|woff2?)$/i.test(
+      url.pathname
+    )
+  ) {
+    event.respondWith(networkFirstGeneric(request));
   }
 });
+
+// ---- helpers ----
+
+async function cacheFirst(request) {
+  const cache = await caches.open(CACHE);
+  const cached = await cache.match(request);
+  if (cached) return cached;
+  const resp = await fetch(request);
+  if (resp.ok) cache.put(request, resp.clone()).catch(() => {});
+  return resp;
+}
+
+async function networkFirstGeneric(request) {
+  const cache = await caches.open(CACHE);
+  try {
+    // bypass HTTP cache so new versions are picked up
+    const resp = await fetch(request, { cache: "no-store" });
+    if (resp.ok) cache.put(request, resp.clone()).catch(() => {});
+    return resp;
+  } catch {
+    const cached = await cache.match(request);
+    return cached ?? Response.error();
+  }
+}
+
+async function networkFirstHTML(event) {
+  try {
+    const preload = await event.preloadResponse;
+    if (preload) return preload;
+  } catch {}
+
+  try {
+    // force revalidation of HTML so new UI loads on first visit
+    return await fetch(event.request, { cache: "no-store" });
+  } catch {
+    // offline fallback if you really want one (optional):
+    const cache = await caches.open(CACHE);
+    return (await cache.match("/index.html")) ?? Response.error();
+  }
+}

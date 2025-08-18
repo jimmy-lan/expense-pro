@@ -53,6 +53,11 @@ if (process.env.NODE_ENV === "production" && "serviceWorker" in navigator) {
               registration.waiting?.postMessage({ type: "SKIP_WAITING" });
             }
           });
+
+          // Encourage immediate activation for newly installing worker
+          try {
+            newWorker.postMessage({ type: "SKIP_WAITING" });
+          } catch {}
         });
 
         let refreshing = false;
@@ -61,6 +66,23 @@ if (process.env.NODE_ENV === "production" && "serviceWorker" in navigator) {
           refreshing = true;
           window.location.reload();
         });
+
+        // Periodically ask the browser to check for SW update without forcing asset refetches.
+        // Browsers already revalidate based on HTTP caching; this only checks the SW script.
+        const TWELVE_HOURS = 12 * 60 * 60 * 1000;
+        let lastUpdateCheck = 0;
+
+        const maybeCheckForUpdate = () => {
+          const now = Date.now();
+          if (now - lastUpdateCheck < 60 * 1000) return; // throttle within a minute
+          lastUpdateCheck = now;
+          registration.update().catch(() => {});
+        };
+
+        // Initial check shortly after load to reduce first-load staleness
+        setTimeout(maybeCheckForUpdate, 5 * 1000);
+        // Recurring check every 12 hours while a tab is open
+        setInterval(maybeCheckForUpdate, TWELVE_HOURS);
       })
       .catch(() => {});
   });
