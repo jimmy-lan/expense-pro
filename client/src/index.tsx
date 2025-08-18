@@ -37,17 +37,18 @@ if (process.env.NODE_ENV === "production" && "serviceWorker" in navigator) {
     const BUILD =
       (import.meta as any).env?.VITE_BUILD_HASH ||
       process.env.REACT_APP_BUILD_HASH ||
-      Date.now().toString();
-    const swUrl = `/service-worker.js?v=${BUILD}`;
+      null;
+
+    const swUrl = BUILD
+      ? `/service-worker.js?v=${BUILD}`
+      : `/service-worker.js`;
 
     const registration = await navigator.serviceWorker.register(swUrl, {
-      // Ensure the SW and any importScripts are not served from the HTTP cache
-      updateViaCache: "none",
-      // Optional: set scope if your app isn't at the origin root
-      // scope: "/",
+      updateViaCache: "none", // fetch SW script fresh (ignores HTTP cache for SW + imports)
+      // scope: "/", // set if your app isn't at origin root
     });
 
-    // Auto-reload when the newly activated SW takes control
+    // Reload once when the new worker takes control
     let refreshing = false;
     navigator.serviceWorker.addEventListener("controllerchange", () => {
       if (refreshing) return;
@@ -55,12 +56,12 @@ if (process.env.NODE_ENV === "production" && "serviceWorker" in navigator) {
       window.location.reload();
     });
 
-    // If an update is already waiting, activate it
+    // If there is already a waiting worker (user had the page open during deploy), activate it
     if (registration.waiting) {
       registration.waiting.postMessage({ type: "SKIP_WAITING" });
     }
 
-    // When a new worker is found, activate it as soon as it reaches 'installed'
+    // When a new worker is found, ask it to activate as soon as it's installed
     registration.addEventListener("updatefound", () => {
       const nw = registration.installing;
       if (!nw) return;
@@ -71,7 +72,6 @@ if (process.env.NODE_ENV === "production" && "serviceWorker" in navigator) {
       });
     });
 
-    // Lightweight periodic SW update checks while a tab stays open
     setInterval(() => registration.update().catch(() => {}), 60 * 60 * 1000);
   })();
 }
