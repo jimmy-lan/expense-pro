@@ -40,18 +40,6 @@ if (process.env.NODE_ENV === "production" && "serviceWorker" in navigator) {
       Date.now().toString();
     const swUrl = `/service-worker.js?v=${BUILD}`;
 
-    // One-time cleanup: unregister workers with a different scriptURL (avoid multiple SWs controlling).
-    try {
-      const regs = await navigator.serviceWorker.getRegistrations();
-      for (const r of regs) {
-        if (!r.scriptURL.endsWith(`/service-worker.js?v=${BUILD}`)) {
-          // Keep the current registration; remove legacy ones.
-          // If you have only one SW path historically, you can remove this block.
-          // await r.unregister();
-        }
-      }
-    } catch {}
-
     const registration = await navigator.serviceWorker.register(swUrl, {
       // Ensure the SW and any importScripts are not served from the HTTP cache
       updateViaCache: "none",
