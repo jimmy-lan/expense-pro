@@ -7,7 +7,6 @@ import {
   faPlus,
   faEllipsis,
   faTrash,
-  faXmark,
 } from "@fortawesome/free-solid-svg-icons";
 import { SpaceCard } from "./SpaceCard";
 import type { SpaceDto, SpacesFilter } from "../../lib/api";
@@ -24,6 +23,7 @@ import {
   MenuItem,
 } from "@material-tailwind/react";
 import { useUserInfo } from "../../hooks";
+import { FloatingBottomDrawer } from "../../components";
 
 export const StandardSpacesList: React.FC<{
   filter: SpacesFilter;
@@ -188,58 +188,36 @@ export const StandardSpacesList: React.FC<{
 
       <div className="py-14" />
 
-      {/* Bottom drawer for bulk actions */}
-      <div
-        className={
-          "fixed left-0 right-0 bottom-0 transition-transform duration-300 " +
-          (selectionMode ? "translate-y-0" : "translate-y-full")
-        }
+      <FloatingBottomDrawer
+        open={selectionMode}
+        prompt={<span>{selectedIds.size} selected</span>}
+        onExit={() => {
+          setSelectionMode(false);
+          setSelectedIds(new Set());
+        }}
       >
-        <div className="mx-auto max-w-4xl px-4 pb-6 pt-4 md:px-6">
-          <div className="rounded-2xl border border-gray-200 bg-white/90 backdrop-blur p-4 shadow-lg">
-            <div className="flex items-center justify-between gap-3 pl-2 lg:pl-4">
-              <div className="text-sm text-gray-700">
-                {selectedIds.size} selected
-              </div>
-              <div className="flex items-center gap-3">
-                <Button
-                  color="red"
-                  variant="filled"
-                  size="md"
-                  disabled={selectedIds.size === 0}
-                  onClick={() =>
-                    navigate("/spaces/delete", {
-                      state: {
-                        spaces: selectedSpaces.map((s) => ({
-                          id: s.id,
-                          name: s.name,
-                        })),
-                        tab: selected,
-                      },
-                    })
-                  }
-                >
-                  <FontAwesomeIcon icon={faTrash} className="mr-2" />
-                  Delete
-                  <span className="hidden lg:inline"> Spaces</span>
-                </Button>
-                <IconButton
-                  variant="text"
-                  color="gray"
-                  className="rounded-md h-10 w-10"
-                  aria-label="Exit selection"
-                  onClick={() => {
-                    setSelectionMode(false);
-                    setSelectedIds(new Set());
-                  }}
-                >
-                  <FontAwesomeIcon icon={faXmark} />
-                </IconButton>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+        <Button
+          color="red"
+          variant="filled"
+          size="md"
+          disabled={selectedIds.size === 0}
+          onClick={() =>
+            navigate("/spaces/delete", {
+              state: {
+                spaces: selectedSpaces.map((s) => ({
+                  id: s.id,
+                  name: s.name,
+                })),
+                tab: selected,
+              },
+            })
+          }
+        >
+          <FontAwesomeIcon icon={faTrash} className="mr-2" />
+          Delete
+          <span className="hidden lg:inline"> Spaces</span>
+        </Button>
+      </FloatingBottomDrawer>
     </>
   );
 };

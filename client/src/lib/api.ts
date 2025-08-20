@@ -196,6 +196,28 @@ export const spacesApi = {
       }
     );
   },
+  recover: async (spaceId: number) => {
+    return apiFetch<{ success: boolean }>(`/api/v1/spaces/${spaceId}/recover`, {
+      method: "POST",
+    });
+  },
+  bulkRecover: async (ids: number[]) => {
+    return apiFetch<{ recovered: number[]; skipped: number[] }>(
+      `/api/v1/spaces/bulk_recover`,
+      { method: "POST", body: JSON.stringify({ ids }) }
+    );
+  },
+  purge: async (spaceId: number) => {
+    return apiFetch<void>(`/api/v1/spaces/${spaceId}/purge`, {
+      method: "DELETE",
+    });
+  },
+  bulkPurge: async (ids: number[]) => {
+    return apiFetch<{ purged: number[]; skipped: number[] }>(
+      `/api/v1/spaces/bulk_purge`,
+      { method: "DELETE", body: JSON.stringify({ ids }) }
+    );
+  },
   show: async (spaceId: number) => {
     return apiFetch<{ space: SpaceDto }>(`/api/v1/spaces/${spaceId}`, {
       method: "GET",

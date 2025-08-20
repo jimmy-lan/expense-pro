@@ -16,11 +16,14 @@ Rails.application.routes.draw do
           get :check_name
           get :recently_deleted
           delete :bulk_delete
+          post :bulk_recover
+          delete :bulk_purge
         end
         member do
           post :invite
           get  :members
           delete :remove_member
+          post :recover
           delete :purge
         end
 

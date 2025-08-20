@@ -39,6 +39,13 @@ class Space < ApplicationRecord
     update!(deleted_at: now, purge_after_at: next_three_am_local.utc)
   end
 
+  # Recover a soft-deleted space
+  def recover!
+    return true if deleted_at.nil?
+
+    update!(deleted_at: nil, purge_after_at: nil)
+  end
+
   private
 
   # Assign a color hex to this space if not already set

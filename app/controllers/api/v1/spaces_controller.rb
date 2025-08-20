@@ -253,6 +253,30 @@ class Api::V1::SpacesController < ApplicationController
     render json: { errors: [ e.record.errors.full_messages.presence || e.message ].flatten }, status: :unprocessable_content
   end
 
+  # Recover a previously soft-deleted space (owner only)
+  def recover
+    space = Space.recently_deleted.where(id: params[:id], created_by_id: current_user.id).first
+    unless space
+      render json: { error: "Space not found" }, status: :not_found
+      return
+    end
+
+    Space.transaction do
+      space.reload.lock!
+      unless space.deleted_at.present?
+        render json: { error: "Space not found" }, status: :not_found
+        raise ActiveRecord::Rollback
+      end
+      space.recover!
+    end
+
+    render json: { success: true }
+  rescue ActiveRecord::RecordNotFound
+    render json: { error: "Space not found" }, status: :not_found
+  rescue ActiveRecord::RecordInvalid => e
+    render json: { errors: [ e.record.errors.full_messages.presence || e.message ].flatten }, status: :unprocessable_content
+  end
+
   # Permanently delete a previously deleted space (owner only)
   def purge
     space = Space.recently_deleted.where(id: params[:id], created_by_id: current_user.id).first
@@ -302,6 +326,62 @@ class Api::V1::SpacesController < ApplicationController
       lastCursor: last_cursor,
       hasMore: has_more
     }
+  end
+
+  # Bulk recover soft-deleted spaces. Only spaces owned by current user are recovered.
+  def bulk_recover
+    ids = params[:ids]
+    ids = ids.is_a?(Array) ? ids.map(&:to_i).uniq : []
+    if ids.empty?
+      render json: { error: "No ids provided" }, status: :unprocessable_content
+      return
+    end
+
+    ids = ids.first(50)
+
+    owned_spaces = Space.recently_deleted.where(id: ids, created_by_id: current_user.id)
+    recovered_ids = []
+    Space.transaction do
+      owned_spaces.each do |space|
+        space.reload.lock!
+        next unless space.deleted_at.present?
+        space.recover!
+        recovered_ids << space.id
+      end
+    end
+
+    skipped_ids = ids - recovered_ids
+
+    render json: { recovered: recovered_ids, skipped: skipped_ids }
+  rescue ActiveRecord::RecordInvalid => e
+    render json: { errors: [ e.record.errors.full_messages.presence || e.message ].flatten }, status: :unprocessable_content
+  end
+
+  # Bulk purge soft-deleted spaces. Only spaces owned by current user are purged.
+  def bulk_purge
+    ids = params[:ids]
+    ids = ids.is_a?(Array) ? ids.map(&:to_i).uniq : []
+    if ids.empty?
+      render json: { error: "No ids provided" }, status: :unprocessable_content
+      return
+    end
+
+    ids = ids.first(50)
+
+    owned_spaces = Space.recently_deleted.where(id: ids, created_by_id: current_user.id)
+    purged_ids = []
+    Space.transaction do
+      owned_spaces.each do |space|
+        space.reload.lock!
+        next unless space.deleted_at.present?
+        space.destroy!
+        purged_ids << space.id
+      end
+    end
+
+    skipped_ids = ids - purged_ids
+
+    render json: { purged: purged_ids, skipped: skipped_ids }
   end
 
   # Displaying single space details
