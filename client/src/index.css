@@ -10,3 +10,20 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* Screen-height utility that behaves well on mobile browsers */
+@layer utilities {
+  .min-h-screen-safe {
+    min-height: 100vh;
+  }
+  @supports (min-height: 100dvh) {
+    .min-h-screen-safe {
+      min-height: 100dvh;
+    }
+  }
+  @supports (min-height: 100svh) {
+    .min-h-screen-safe {
+      min-height: 100svh;
+    }
+  }
+}

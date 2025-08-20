@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChevronLeft } from "@fortawesome/free-solid-svg-icons";
 import { Button } from "./ui/Button";
+import { useScrollTopOnMount } from "../hooks";
 
 export type StepDefinition = {
   id: string;
@@ -39,6 +40,7 @@ const StepsContainer: React.FC<StepsContainerProps> = ({
   className = "",
 }) => {
   const navigate = useNavigate();
+  useScrollTopOnMount();
   // Index children by step id for O(1) retrieval, and keep a flat array for fallback
   const { stepIdToChild, childrenArray } = useMemo(() => {
     const map = new Map<string, React.ReactNode>();
@@ -60,7 +62,7 @@ const StepsContainer: React.FC<StepsContainerProps> = ({
   const currentIndex = steps.findIndex((s) => s.id === currentStepId);
 
   return (
-    <div className={`min-h-screen bg-white ${className}`}>
+    <div className={`min-h-screen-safe bg-gray-50 ${className}`}>
       <AppNavbar />
 
       {/* Mobile: segmented progress bar */}

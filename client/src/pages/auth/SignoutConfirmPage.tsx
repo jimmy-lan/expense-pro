@@ -3,14 +3,17 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Typography } from "@material-tailwind/react";
 import { Button } from "../../components/ui/Button";
 import { useUserInfo } from "../../hooks";
+import { useScrollTopOnMount } from "../../hooks";
 
 const SignoutConfirmPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useUserInfo();
 
+  useScrollTopOnMount();
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-6">
+    <div className="min-h-screen-safe flex items-center justify-center bg-gray-50 px-6">
       <div className="w-full max-w-md rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
         <Typography variant="paragraph" className="text-gray-900">
           Currently signing out of:

@@ -5,6 +5,7 @@ import { SpacesMenuList } from "./SpacesMenuList";
 import { StandardSpacesList } from "./StandardSpacesList";
 import { RecentlyDeletedSpacesList } from "./RecentlyDeletedSpacesList";
 import { MenuKey } from "./menu";
+import { useScrollTopOnMount } from "../../hooks";
 
 const MySpacesPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -18,7 +19,7 @@ const MySpacesPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen-safe bg-gray-50">
       <AppNavbar />
 
       <div className="mx-auto grid grid-cols-1 gap-12 2xl:gap-16 px-4 py-6 lg:grid-cols-12 lg:px-12 2xl:px-16">

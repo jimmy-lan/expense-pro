@@ -181,7 +181,7 @@ export const StandardSpacesList: React.FC<{
             variant="outlined"
             loading={spacesQuery.isFetchingNextPage}
           >
-            {spacesQuery.isFetchingNextPage ? "Loading..." : "Load more"}
+            Load More
           </Button>
         </div>
       )}

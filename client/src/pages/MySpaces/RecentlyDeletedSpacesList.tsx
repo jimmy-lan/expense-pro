@@ -72,8 +72,9 @@ export const RecentlyDeletedSpacesList: React.FC<{
             onClick={() => fetchNextPage()}
             disabled={!hasNextPage || isFetchingNextPage}
             variant="outlined"
+            loading={isFetchingNextPage}
           >
-            {isFetchingNextPage ? "Loading..." : "Load more"}
+            Load more
           </MTButton>
         </div>
       )}

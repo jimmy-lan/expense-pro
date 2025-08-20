@@ -16,6 +16,9 @@ import { transactionsApi } from "../../lib/api";
 import { Controller, useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
+import { useScrollTopOnMount } from "../../hooks";
+import { faCoins } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 type TxType = "spend" | "credit";
 
@@ -52,6 +55,8 @@ export const NewTransactionPage: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const id = Number(spaceId);
+
+  useScrollTopOnMount();
 
   const {
     control,
@@ -93,7 +98,7 @@ export const NewTransactionPage: React.FC = () => {
   const onSubmit = (values: NewTxFormValues) => mutation.mutate(values);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen-safe bg-gray-50">
       <AppNavbar />
       <div className="mx-auto px-4 py-6 md:px-8 lg:px-12 2xl:px-16">
         <div className="mb-6">
@@ -105,125 +110,118 @@ export const NewTransactionPage: React.FC = () => {
           </Typography>
         </div>
 
-        <Card className="shadow-sm">
-          <CardBody className="space-y-5">
-            <form
-              onSubmit={handleSubmit(onSubmit)}
-              className="grid grid-cols-1 gap-4 py-4"
-            >
-              <div>
-                <Controller
-                  name="type"
-                  control={control}
-                  render={({ field }) => (
-                    <Select
-                      label="Type"
-                      variant="outlined"
-                      size="lg"
-                      value={field.value}
-                      onChange={(val) =>
-                        field.onChange((val as TxType) || "spend")
-                      }
-                      containerProps={{ className: "h-14" }}
-                    >
-                      <Option value="spend">Spend</Option>
-                      <Option value="credit">Credit</Option>
-                    </Select>
-                  )}
-                />
-                {errors.type && (
-                  <p className="mt-1 text-xs text-red-600">
-                    {errors.type.message as string}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <Input
-                  label="Title"
-                  {...register("title")}
-                  error={!!errors.title}
-                  helperText={errors.title?.message}
-                  required
-                />
-              </div>
-
-              <TextArea
-                label="Description"
-                {...register("description")}
-                error={!!errors.description}
-                helperText={errors.description?.message}
-              />
-              <div>
-                <Input
-                  label="Amount"
-                  type="text"
-                  placeholder="e.g. 12.34"
-                  {...register("amount")}
-                  error={!!errors.amount}
-                  helperText={errors.amount?.message}
-                  required
-                />
-              </div>
-              <div>
-                <Input
-                  label="Occurred at"
-                  type="date"
-                  {...register("occurredAt")}
-                  error={!!errors.occurredAt}
-                  helperText={errors.occurredAt?.message}
-                  required
-                />
-              </div>
-
-              <div className="flex items-start sm:items-center gap-3">
-                <input
-                  id="fullCover"
-                  type="checkbox"
-                  className="mt-1 h-5 w-5 rounded border-gray-400 text-primary focus:ring-primary"
-                  {...register("fullCover")}
-                />
-                <div className="flex-1">
-                  <label
-                    htmlFor="fullCover"
-                    className="block text-gray-800 font-medium"
-                  >
-                    Full cover
-                  </label>
-                  <p className="text-gray-600 text-sm mt-0.5">
-                    If enabled, the creator covers the entire cost. No splitting
-                    needed.
-                  </p>
-                </div>
-              </div>
-
-              {mutation.isError && (
-                <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-                  {(mutation.error as any)?.message ||
-                    "Failed to create transaction"}
-                </div>
-              )}
-
-              <div className="flex flex-col sm:flex-row gap-3 pt-2">
-                <Button
-                  type="submit"
-                  disabled={isSubmitting || mutation.isPending}
-                  loading={mutation.isPending}
-                >
-                  Create
-                </Button>
-                <Button
-                  type="button"
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="grid grid-cols-1 gap-4 py-4"
+        >
+          <div>
+            <Controller
+              name="type"
+              control={control}
+              render={({ field }) => (
+                <Select
+                  label="Type"
                   variant="outlined"
-                  color="primary"
-                  onClick={() => navigate(`/my/space/${id}`)}
+                  size="lg"
+                  value={field.value}
+                  onChange={(val) => field.onChange((val as TxType) || "spend")}
+                  containerProps={{ className: "h-14" }}
                 >
-                  Cancel
-                </Button>
-              </div>
-            </form>
-          </CardBody>
-        </Card>
+                  <Option value="spend">Spend</Option>
+                  <Option value="credit">Credit</Option>
+                </Select>
+              )}
+            />
+            {errors.type && (
+              <p className="mt-1 text-xs text-red-600">
+                {errors.type.message as string}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <Input
+              label="Title"
+              {...register("title")}
+              error={!!errors.title}
+              helperText={errors.title?.message}
+              required
+            />
+          </div>
+
+          <TextArea
+            label="Description"
+            {...register("description")}
+            error={!!errors.description}
+            helperText={errors.description?.message}
+          />
+          <div>
+            <Input
+              label="Amount"
+              type="text"
+              placeholder="e.g. 12.34"
+              {...register("amount")}
+              error={!!errors.amount}
+              helperText={errors.amount?.message}
+              required
+            />
+          </div>
+          <div>
+            <Input
+              label="Occurred at"
+              type="date"
+              {...register("occurredAt")}
+              error={!!errors.occurredAt}
+              helperText={errors.occurredAt?.message}
+              required
+            />
+          </div>
+
+          <div className="flex items-start sm:items-center gap-3">
+            <input
+              id="fullCover"
+              type="checkbox"
+              className="mt-1 h-5 w-5 rounded border-gray-400 text-primary focus:ring-primary"
+              {...register("fullCover")}
+            />
+            <div className="flex-1">
+              <label
+                htmlFor="fullCover"
+                className="block text-gray-800 font-medium"
+              >
+                Full cover
+              </label>
+              <p className="text-gray-600 text-sm mt-0.5">
+                If enabled, the creator covers the entire cost. No splitting
+                needed.
+              </p>
+            </div>
+          </div>
+
+          {mutation.isError && (
+            <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+              {(mutation.error as any)?.message ||
+                "Failed to create transaction"}
+            </div>
+          )}
+
+          <div className="flex justify-between gap-3 mt-3">
+            <Button type="submit" loading={isSubmitting || mutation.isPending}>
+              {!isSubmitting && !mutation.isPending && (
+                <FontAwesomeIcon icon={faCoins} className="mr-2" />
+              )}
+              Create
+            </Button>
+            <Button
+              type="button"
+              variant="text"
+              color="gray"
+              onClick={() => navigate(`/my/space/${id}`)}
+            >
+              Cancel
+            </Button>
+          </div>
+        </form>
       </div>
     </div>
   );

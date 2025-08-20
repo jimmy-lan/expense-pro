@@ -8,6 +8,7 @@ import { faTrash } from "@fortawesome/free-solid-svg-icons";
 import dayjs from "dayjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { transactionsApi, type TransactionDto } from "../../lib/api";
+import { useScrollTopOnMount } from "../../hooks";
 
 export const DeleteTransactionPage: React.FC = () => {
   const navigate = useNavigate();
@@ -20,6 +21,8 @@ export const DeleteTransactionPage: React.FC = () => {
   const txFromState = (location.state as any)?.transaction as
     | TransactionDto
     | undefined;
+
+  useScrollTopOnMount();
 
   const txQuery = useQuery({
     queryKey: ["transaction", id, txId],
@@ -39,7 +42,7 @@ export const DeleteTransactionPage: React.FC = () => {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen-safe bg-gray-50">
       <AppNavbar />
       <div className="mx-auto max-w-3xl px-6 py-10">
         <Typography variant="h4" className="font-bold text-gray-900 mb-1">
@@ -91,10 +94,11 @@ export const DeleteTransactionPage: React.FC = () => {
           <Button
             color="red"
             onClick={() => mutation.mutate()}
-            disabled={mutation.isPending}
             loading={mutation.isPending}
           >
-            <FontAwesomeIcon icon={faTrash} className="mr-2" />
+            {!mutation.isPending && (
+              <FontAwesomeIcon icon={faTrash} className="mr-2" />
+            )}
             Delete Transaction
           </Button>
           <Button

@@ -101,7 +101,7 @@ export const SpacePage: React.FC = () => {
   const space = spaceQuery.data?.space;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen-safe bg-gray-50">
       <AppNavbar />
 
       <div className="mx-auto px-4 py-6 md:px-8 lg:px-12 2xl:px-16">
