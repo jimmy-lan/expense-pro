@@ -13,6 +13,8 @@ class Space < ApplicationRecord
   scope :recently_deleted, -> { where.not(deleted_at: nil) }
 
   before_create :assign_color
+  # Disallow hard-deleting an active (non-soft-deleted) space
+  before_destroy :ensure_soft_deleted
 
   # Returns the maximum number of members allowed in this space, including the owner.
   def max_members_allowed
@@ -47,6 +49,13 @@ class Space < ApplicationRecord
   end
 
   private
+
+  def ensure_soft_deleted
+    return true if deleted_at.present?
+
+    errors.add(:base, "Cannot purge an active space. Soft delete first.")
+    throw(:abort)
+  end
 
   # Assign a color hex to this space if not already set
   def assign_color
