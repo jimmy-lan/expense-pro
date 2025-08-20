@@ -19,9 +19,5 @@ echo "Setting up Rails..."
 bundle install
 bundle exec rails db:migrate
 
-echo "Preparing Solid Queue database/schema..."
-bundle exec rails db:queue:prepare
-
 echo "Starting Rails server..."
-export SOLID_QUEUE_IN_PUMA=${SOLID_QUEUE_IN_PUMA:-true}
 bundle exec rails server -b 0.0.0.0 -p ${PORT}
