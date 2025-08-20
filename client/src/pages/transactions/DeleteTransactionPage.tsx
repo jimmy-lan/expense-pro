@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { AppNavbar } from "../../components";
 import { Button } from "../../components/ui/Button";
@@ -7,7 +7,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrash } from "@fortawesome/free-solid-svg-icons";
 import dayjs from "dayjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { transactionsApi, type TransactionDto } from "../../lib/api";
+import { transactionsApi, type TransactionDto, ApiError } from "../../lib/api";
 import { useScrollTopOnMount } from "../../hooks";
 
 export const DeleteTransactionPage: React.FC = () => {
@@ -24,20 +24,48 @@ export const DeleteTransactionPage: React.FC = () => {
 
   useScrollTopOnMount();
 
-  const txQuery = useQuery({
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const txQuery = useQuery<
+    { transaction: TransactionDto },
+    ApiError,
+    { transaction: TransactionDto },
+    (string | number)[]
+  >({
     queryKey: ["transaction", id, txId],
     queryFn: () => transactionsApi.show(id, txId),
     enabled: Boolean(id && txId) && !txFromState,
   });
+
+  useEffect(() => {
+    if (txQuery.isError && txQuery.error) {
+      const err = txQuery.error;
+      if (err instanceof ApiError && err.status === 404) {
+        navigate(`/my/space/${id}`);
+      } else {
+        setErrorMessage(err.message || "Failed to load transaction");
+      }
+    }
+  }, [txQuery.isError, txQuery.error, navigate, id]);
 
   const transaction: TransactionDto | undefined =
     txFromState || txQuery.data?.transaction;
 
   const mutation = useMutation({
     mutationFn: async () => transactionsApi.delete(id, txId),
+    onMutate: () => {
+      setErrorMessage(null);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions", id] });
       navigate(`/my/space/${id}`);
+    },
+    onError: (err) => {
+      if (err instanceof ApiError && err.status === 404) {
+        navigate(`/my/space/${id}`);
+        return;
+      }
+      setErrorMessage((err as any)?.message || "Failed to delete transaction");
     },
   });
 
@@ -48,9 +76,15 @@ export const DeleteTransactionPage: React.FC = () => {
         <Typography variant="h4" className="font-bold text-gray-900 mb-1">
           Delete Transaction
         </Typography>
-        <Typography variant="small" className="text-gray-600 mb-6">
+        <Typography variant="small" className="text-gray-600 mb-4">
           This action cannot be undone.
         </Typography>
+
+        {errorMessage && (
+          <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700 mb-4">
+            {errorMessage}
+          </div>
+        )}
 
         <Card className="shadow-sm mb-6">
           <CardBody>

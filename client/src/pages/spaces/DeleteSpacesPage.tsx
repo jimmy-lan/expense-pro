@@ -5,8 +5,9 @@ import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrash } from "@fortawesome/free-solid-svg-icons";
-import { spacesApi } from "../../lib/api";
+import { spacesApi, ApiError } from "../../lib/api";
 import { useScrollTopOnMount } from "../../hooks";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface PendingDeleteSpace {
   id: number;
@@ -16,32 +17,40 @@ interface PendingDeleteSpace {
 export const DeleteSpacesPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const queryClient = useQueryClient();
   const stateSpaces: PendingDeleteSpace[] =
     (location.state as any)?.spaces || [];
 
   useScrollTopOnMount();
 
   const [confirmText, setConfirmText] = useState("");
-  const [submitting, setSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const canSubmit = useMemo(
     () => confirmText.trim().toLowerCase() === "delete",
     [confirmText]
   );
 
-  const onDelete = async () => {
-    if (!canSubmit || submitting) return;
-    setSubmitting(true);
-    try {
-      await spacesApi.bulkDelete(stateSpaces.map((s) => s.id));
-      navigate("/my");
-    } catch (e) {
-      // naive error surface; in a real app you'd show a toast/snackbar
-      console.error(e);
-      navigate("/my");
-    } finally {
-      setSubmitting(false);
-    }
-  };
+  const mutation = useMutation({
+    mutationFn: async () => spacesApi.bulkDelete(stateSpaces.map((s) => s.id)),
+    onMutate: () => {
+      setErrorMessage(null);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["spaces"] });
+      navigate(
+        (location.state as any)?.tab
+          ? `/my?tab=${encodeURIComponent((location.state as any).tab)}`
+          : "/my"
+      );
+    },
+    onError: (err) => {
+      if (err instanceof ApiError && err.status === 401) {
+        navigate("/login");
+        return;
+      }
+      setErrorMessage((err as any)?.message || "Failed to delete spaces");
+    },
+  });
 
   return (
     <div className="min-h-screen-safe bg-gray-50">
@@ -52,6 +61,12 @@ export const DeleteSpacesPage: React.FC = () => {
           You are about to delete the following spaces. This action is
           reversible only until the purge deadline defined by your plan.
         </p>
+
+        {errorMessage && (
+          <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            {errorMessage}
+          </div>
+        )}
 
         <div className="mb-6 rounded-xl border border-gray-200 bg-white p-4">
           <ul className="list-disc pl-5 text-gray-900">
@@ -76,10 +91,13 @@ export const DeleteSpacesPage: React.FC = () => {
         <div className="flex justify-between gap-3 mt-6">
           <Button
             color="red"
-            onClick={onDelete}
-            disabled={!canSubmit || submitting}
+            onClick={() => mutation.mutate()}
+            disabled={!canSubmit}
+            loading={mutation.isPending}
           >
-            <FontAwesomeIcon icon={faTrash} className="mr-2" />
+            {!mutation.isPending && (
+              <FontAwesomeIcon icon={faTrash} className="mr-2" />
+            )}
             Delete Spaces
           </Button>
           <Button
@@ -87,12 +105,12 @@ export const DeleteSpacesPage: React.FC = () => {
             color="gray"
             onClick={() =>
               navigate(
-                location.state?.tab
-                  ? `/my?tab=${encodeURIComponent(location.state?.tab)}`
+                (location.state as any)?.tab
+                  ? `/my?tab=${encodeURIComponent((location.state as any).tab)}`
                   : "/my"
               )
             }
-            disabled={submitting}
+            disabled={mutation.isPending}
           >
             Cancel
           </Button>
