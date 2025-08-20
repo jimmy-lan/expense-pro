@@ -1,13 +1,7 @@
 import React from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AppNavbar } from "../../components";
-import {
-  Card,
-  CardBody,
-  Select,
-  Typography,
-  Option,
-} from "@material-tailwind/react";
+import { Select, Typography, Option } from "@material-tailwind/react";
 import { Input, TextArea } from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
 import dayjs from "dayjs";

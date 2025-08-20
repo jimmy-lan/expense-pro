@@ -5,7 +5,6 @@ import { SpacesMenuList } from "./SpacesMenuList";
 import { StandardSpacesList } from "./StandardSpacesList";
 import { RecentlyDeletedSpacesList } from "./RecentlyDeletedSpacesList";
 import { MenuKey } from "./menu";
-import { useScrollTopOnMount } from "../../hooks";
 
 const MySpacesPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();

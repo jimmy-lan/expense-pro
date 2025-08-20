@@ -3,8 +3,6 @@ import { ListItem, Typography } from "@material-tailwind/react";
 import type { DeletedSpaceDto } from "../../lib/api";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faAngleRight } from "@fortawesome/free-solid-svg-icons";
 import { twMerge } from "tailwind-merge";
 
 dayjs.extend(relativeTime);
