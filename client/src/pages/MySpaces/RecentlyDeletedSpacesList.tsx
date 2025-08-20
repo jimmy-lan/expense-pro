@@ -174,11 +174,16 @@ export const RecentlyDeletedSpacesList: React.FC<{
         </div>
       )}
 
-      <div className="py-14" />
+      <div
+        className="pt-4 pb-24 md:pb-14"
+        style={{
+          paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 6rem)",
+        }}
+      />
 
       <FloatingBottomDrawer
         open={selectionMode}
-        prompt={<span>{selectedIds.size} selected</span>}
+        prompt={`${selectedIds.size} selected`}
         onExit={() => {
           setSelectionMode(false);
           setSelectedIds(new Set());
@@ -191,10 +196,10 @@ export const RecentlyDeletedSpacesList: React.FC<{
           disabled={recoverDisabled}
           loading={recoverMutation.isPending}
           onClick={() => recoverMutation.mutate(Array.from(selectedIds))}
-          className="mr-2 "
+          className="md:mr-2"
         >
-          <FontAwesomeIcon icon={faRotateLeft} className="mr-2" />
-          Recover
+          <FontAwesomeIcon icon={faRotateLeft} className="md:mr-2" />
+          <span className="hidden md:block">Recover</span>
         </Button>
         <Button
           color="red"
@@ -204,8 +209,8 @@ export const RecentlyDeletedSpacesList: React.FC<{
           loading={purgeMutation.isPending}
           onClick={() => purgeMutation.mutate(Array.from(selectedIds))}
         >
-          <FontAwesomeIcon icon={faTrash} className="mr-2" />
-          Delete Forever
+          <FontAwesomeIcon icon={faTrash} className="md:mr-2" />
+          <span className="hidden md:block">Delete Forever</span>
         </Button>
       </FloatingBottomDrawer>
     </>
