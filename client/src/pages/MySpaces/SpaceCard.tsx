@@ -71,7 +71,7 @@ export const SpaceCard: React.FC<{
     >
       <div className="flex items-center gap-4 p-5 w-full">
         <div className="flex items-center self-stretch mr-2">
-          <div className="mr-3 lg:mr-4 h-full w-1 rounded-full bg-gray-400/60 transition-colors group-hover:bg-current" />
+          <div className="mr-1 md:mr-3 lg:mr-4 h-full w-1 rounded-full bg-gray-400/60 transition-colors group-hover:bg-current" />
           <div className="hidden lg:block h-12 w-12 overflow-hidden rounded-full ring-2 ring-white/60 shadow-sm">
             {space.createdByAvatarUrl ? (
               <img
@@ -88,7 +88,7 @@ export const SpaceCard: React.FC<{
         </div>
 
         <div className="flex-1">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col mb-2 sm:flex-row sm:gap-3 items-start sm:items-center justify-center sm:justify-start">
             <Typography
               variant="h6"
               className="truncate font-semibold text-gray-900"
