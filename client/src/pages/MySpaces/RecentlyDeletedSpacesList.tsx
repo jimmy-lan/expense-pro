@@ -199,7 +199,7 @@ export const RecentlyDeletedSpacesList: React.FC<{
           className="md:mr-2"
         >
           <FontAwesomeIcon icon={faRotateLeft} className="md:mr-2" />
-          <span className="hidden md:block">Recover</span>
+          <span className="hidden md:inline">Recover</span>
         </Button>
         <Button
           color="red"
@@ -210,7 +210,7 @@ export const RecentlyDeletedSpacesList: React.FC<{
           onClick={() => purgeMutation.mutate(Array.from(selectedIds))}
         >
           <FontAwesomeIcon icon={faTrash} className="md:mr-2" />
-          <span className="hidden md:block">Delete Forever</span>
+          <span className="hidden md:inline">Delete Forever</span>
         </Button>
       </FloatingBottomDrawer>
     </>
