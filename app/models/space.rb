@@ -26,7 +26,17 @@ class Space < ApplicationRecord
 
     retention = (created_by&.plan&.deleted_space_retention_duration || 4.hours)
     now = Time.current
-    update!(deleted_at: now, purge_after_at: now + retention)
+
+    # Step 1: baseline time is now + retention
+    baseline_time = now + retention
+
+    # Step 2: round up to the next 3 AM in America/Vancouver, because that's when the purge job runs
+    pacific_tz = ActiveSupport::TimeZone["America/Vancouver"]
+    baseline_local = baseline_time.in_time_zone(pacific_tz)
+    next_three_am_local = pacific_tz.local(baseline_local.year, baseline_local.month, baseline_local.day, 3)
+    next_three_am_local += 1.day if next_three_am_local < baseline_local
+
+    update!(deleted_at: now, purge_after_at: next_three_am_local.utc)
   end
 
   private
