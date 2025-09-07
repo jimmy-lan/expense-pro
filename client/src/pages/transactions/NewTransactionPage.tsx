@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AppNavbar } from "../../components";
 import { Checkbox, Typography } from "@material-tailwind/react";
@@ -58,6 +58,8 @@ export const NewTransactionPage: React.FC = () => {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
+    watch,
+    resetField,
   } = useForm<NewTxFormValues>({
     resolver: yupResolver(schema),
     defaultValues: {
@@ -69,6 +71,10 @@ export const NewTransactionPage: React.FC = () => {
       fullCover: false,
     },
   });
+
+  useEffect(() => {
+    resetField("fullCover", { defaultValue: false });
+  }, [watch("type")]);
 
   const mutation = useMutation({
     mutationFn: async (values: NewTxFormValues) => {
@@ -162,23 +168,25 @@ export const NewTransactionPage: React.FC = () => {
             />
           </div>
 
-          <div className="!border border-gray-400 rounded-md overflow-hidden hover:border-primary transition-border duration-300 p-2 md:p-3">
-            <Checkbox
-              color="blue"
-              label={
-                <div className="ml-1">
-                  <Typography className="w-full font-medium text-gray-800">
-                    Full cover
-                  </Typography>
-                  <Typography variant="small" className="text-gray-600">
-                    If enabled, the creator covers the entire cost. No splitting
-                    needed.
-                  </Typography>
-                </div>
-              }
-              {...register("fullCover")}
-            />
-          </div>
+          {watch("type") === "spend" && (
+            <div className="!border border-gray-400 rounded-md overflow-hidden hover:border-primary transition-border duration-300 p-2 md:p-3">
+              <Checkbox
+                color="blue"
+                label={
+                  <div className="ml-1">
+                    <Typography className="w-full font-medium text-gray-800">
+                      Full cover
+                    </Typography>
+                    <Typography variant="small" className="text-gray-600">
+                      If enabled, the creator covers the entire cost. No
+                      splitting needed.
+                    </Typography>
+                  </div>
+                }
+                {...register("fullCover")}
+              />
+            </div>
+          )}
 
           {mutation.isError && (
             <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
