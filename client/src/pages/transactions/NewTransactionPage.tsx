@@ -8,7 +8,7 @@ import { Button } from "../../components/ui/Button";
 import dayjs from "dayjs";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { transactionsApi } from "../../lib/api";
-import { Controller, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { useScrollTopOnMount } from "../../hooks";
