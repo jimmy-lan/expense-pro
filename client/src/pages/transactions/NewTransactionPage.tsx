@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AppNavbar } from "../../components";
-import { Typography } from "@material-tailwind/react";
+import { Checkbox, Typography } from "@material-tailwind/react";
 import { Input, TextArea } from "../../components/ui/Input";
 import { Select, Option } from "../../components/ui/Select";
 import { Button } from "../../components/ui/Button";
@@ -158,25 +158,20 @@ export const NewTransactionPage: React.FC = () => {
             />
           </div>
 
-          <div className="flex items-start sm:items-center gap-3">
-            <input
-              id="fullCover"
-              type="checkbox"
-              className="mt-1 h-5 w-5 rounded border-gray-400 text-primary focus:ring-primary"
+          <div className="!border border-gray-400 rounded-md overflow-hidden hover:border-primary transition-border duration-300 p-2 md:p-3">
+            <Checkbox
+              color="blue"
+              label={
+                <Typography className="ml-1 w-full font-medium text-gray-800">
+                  Full cover
+                  <Typography variant="small" className="text-gray-600">
+                    If enabled, the creator covers the entire cost. No splitting
+                    needed.
+                  </Typography>
+                </Typography>
+              }
               {...register("fullCover")}
             />
-            <div className="flex-1">
-              <label
-                htmlFor="fullCover"
-                className="block text-gray-800 font-medium"
-              >
-                Full cover
-              </label>
-              <p className="text-gray-600 text-sm mt-0.5">
-                If enabled, the creator covers the entire cost. No splitting
-                needed.
-              </p>
-            </div>
           </div>
 
           {mutation.isError && (
