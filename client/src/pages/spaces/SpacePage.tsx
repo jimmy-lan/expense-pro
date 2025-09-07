@@ -130,7 +130,7 @@ export const SpacePage: React.FC = () => {
             )}
             {space?.description && (
               <Typography variant="small" className="text-gray-600 mt-1">
-                {space.description}
+                {space.description || ""}
               </Typography>
             )}
           </div>
@@ -249,10 +249,10 @@ export const SpacePage: React.FC = () => {
             />
             <div>
               <Typography variant="h6" className="font-semibold text-gray-900">
-                {selected?.title}
+                {selected?.title || ""}
               </Typography>
               <Typography variant="small" className="text-gray-600">
-                {selected?.creator?.name}
+                {selected?.creator?.name || ""}
               </Typography>
             </div>
             <div className="ml-auto text-right">
@@ -279,7 +279,7 @@ export const SpacePage: React.FC = () => {
                 Description
               </Typography>
               <Typography variant="small" className="text-gray-700">
-                {selected.description}
+                {selected.description || ""}
               </Typography>
             </div>
           )}
