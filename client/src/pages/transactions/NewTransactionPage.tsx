@@ -116,8 +116,12 @@ export const NewTransactionPage: React.FC = () => {
             control={control}
             error={!!errors.type}
           >
-            <Option value="spend">Spend</Option>
-            <Option value="credit">Credit</Option>
+            <Option value="spend">
+              <span className="text-deep-orange-800">Spend</span>
+            </Option>
+            <Option value="credit">
+              <span className="text-green-800">Credit</span>
+            </Option>
           </Select>
 
           <div>
@@ -162,13 +166,15 @@ export const NewTransactionPage: React.FC = () => {
             <Checkbox
               color="blue"
               label={
-                <Typography className="ml-1 w-full font-medium text-gray-800">
-                  Full cover
+                <div className="ml-1">
+                  <Typography className="w-full font-medium text-gray-800">
+                    Full cover
+                  </Typography>
                   <Typography variant="small" className="text-gray-600">
                     If enabled, the creator covers the entire cost. No splitting
                     needed.
                   </Typography>
-                </Typography>
+                </div>
               }
               {...register("fullCover")}
             />
