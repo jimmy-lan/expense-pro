@@ -5,10 +5,8 @@ import {
   Button as MTButton,
   Card,
   CardBody,
-  Dialog,
-  DialogBody,
-  DialogHeader,
   Typography,
+  List,
   ListItem,
 } from "@material-tailwind/react";
 import dayjs from "dayjs";
@@ -30,6 +28,7 @@ import {
   faPlus,
   faArrowLeft,
   faTrash,
+  faChevronDown,
 } from "@fortawesome/free-solid-svg-icons";
 import { twMerge } from "tailwind-merge";
 
@@ -96,7 +95,7 @@ export const SpacePage: React.FC = () => {
     }));
   }, [txQuery.data]);
 
-  const [selected, setSelected] = useState<TransactionDto | null>(null);
+  const [expandedId, setExpandedId] = useState<number | null>(null);
 
   const space = spaceQuery.data?.space;
 
@@ -120,7 +119,11 @@ export const SpacePage: React.FC = () => {
                 Back to My Spaces
               </Button>
             </div>
-            <Typography variant="h4" className="font-bold text-gray-900">
+            <Typography
+              variant="h3"
+              as="h1"
+              className="font-bold text-gray-900"
+            >
               {spaceQuery.isLoading ? "Loading..." : space?.name || "Space"}
             </Typography>
             {spaceQuery.isError && (
@@ -148,7 +151,7 @@ export const SpacePage: React.FC = () => {
         </div>
 
         {/* Transactions list */}
-        <div>
+        <div className="mt-10">
           {txQuery.isError && (
             <div className="mb-4 p-4 text-red-700 bg-red-50 border border-red-100 rounded">
               {(txQuery.error as any)?.message || "Failed to load transactions"}
@@ -162,73 +165,217 @@ export const SpacePage: React.FC = () => {
               </CardBody>
             </Card>
           ) : (
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col">
+              <Typography variant="h4" as="h1" className="ml-1 mb-6">
+                Activity
+              </Typography>
+
               {transactions.map((group) => (
-                <Card key={group.key} className="shadow-sm">
-                  <div className="px-4 py-3 border-b border-gray-100 bg-white">
+                <div key={group.key} className="">
+                  <div className="px-1 py-3">
                     <Typography
-                      variant="small"
-                      className="font-semibold text-gray-800"
+                      variant="h5"
+                      as="h2"
+                      className="font-semibold text-gray-700"
                     >
                       {group.header}
                     </Typography>
                   </div>
-                  <ul>
-                    {group.items.map((t) => (
-                      <ListItem
-                        key={t.id}
-                        className="p-6 rounded-none border-gray-100 bg-white active:bg-gray-50 cursor-pointer"
-                        onClick={() => setSelected(t)}
-                      >
-                        <div className="flex items-center gap-4 w-full">
-                          <Avatar
-                            src={t.creator?.avatarUrl || undefined}
-                            alt={t.creator?.name || "User"}
-                            variant="circular"
-                            className="h-10 w-10"
-                          />
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between gap-3">
-                              <div>
-                                <Typography
-                                  variant="paragraph"
-                                  className="font-semibold text-gray-900 truncate"
-                                >
-                                  {t.title}
-                                </Typography>
-                                <div className="mt-0.5 text-sm text-gray-600 truncate">
-                                  {t.creator?.name || "Unknown"}
+                  <List>
+                    {group.items.map((t) => {
+                      const isExpanded = expandedId === t.id;
+                      const currentUserId = (user as any)?.id as
+                        | number
+                        | undefined;
+                      const isCreator =
+                        currentUserId && t.creator?.id === currentUserId;
+                      const isSpaceAdmin = space?.role === "admin";
+                      const canDelete = Boolean(isCreator || isSpaceAdmin);
+
+                      return (
+                        <div key={t.id}>
+                          <ListItem className="py-1 px-2">
+                            <button
+                              type="button"
+                              className={
+                                "w-full flex items-center gap-4 text-left"
+                              }
+                              onClick={() =>
+                                setExpandedId((prev) =>
+                                  prev === t.id ? null : t.id
+                                )
+                              }
+                              aria-expanded={isExpanded}
+                            >
+                              <Avatar
+                                src={t.creator?.avatarUrl || undefined}
+                                alt={t.creator?.name || "User"}
+                                variant="circular"
+                                className="h-8 w-8"
+                              />
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between gap-3">
+                                  <div>
+                                    <Typography
+                                      variant="paragraph"
+                                      className="font-semibold text-gray-900 truncate"
+                                    >
+                                      {t.title}
+                                    </Typography>
+                                    <div className="mt-0.5 text-sm text-gray-600 truncate">
+                                      {t.creator?.name || "Unknown"}
+                                    </div>
+                                  </div>
+                                  <div className="text-right">
+                                    <Typography
+                                      variant="paragraph"
+                                      className={twMerge(
+                                        "font-semibold",
+                                        Number(t.amount) < 0
+                                          ? "text-gray-900"
+                                          : "text-green-700"
+                                      )}
+                                    >
+                                      {formatAmount(t.amount)}
+                                    </Typography>
+                                    <FontAwesomeIcon
+                                      icon={faChevronDown}
+                                      className={twMerge(
+                                        "ml-auto mt-1 text-gray-500 transition-transform",
+                                        isExpanded ? "rotate-180" : "rotate-0"
+                                      )}
+                                    />
+                                  </div>
                                 </div>
                               </div>
-                              <Typography
-                                variant="paragraph"
-                                className={twMerge(
-                                  "font-semibold",
-                                  Number(t.amount) < 0
-                                    ? "text-gray-900"
-                                    : "text-green-700"
+                            </button>
+                          </ListItem>
+
+                          {isExpanded && (
+                            <div className="pt-6 md:pt-4 px-2 pb-2 md:pl-14">
+                              {t.description && (
+                                <div className="mb-3">
+                                  <Typography
+                                    variant="small"
+                                    className="font-semibold text-gray-800"
+                                  >
+                                    Description
+                                  </Typography>
+                                  <Typography
+                                    variant="small"
+                                    className="text-gray-700"
+                                  >
+                                    {t.description}
+                                  </Typography>
+                                </div>
+                              )}
+
+                              <div className="grid grid-cols-2 gap-y-2">
+                                <Typography
+                                  variant="small"
+                                  className="font-semibold text-gray-800"
+                                >
+                                  Occurred on
+                                </Typography>
+                                <Typography
+                                  variant="small"
+                                  className="font-normal text-right"
+                                >
+                                  {dayjs(t.occurredAt).format("MMM D, YYYY")}
+                                </Typography>
+
+                                <Typography
+                                  variant="small"
+                                  className="font-semibold text-gray-800"
+                                >
+                                  Created at
+                                </Typography>
+                                <Typography
+                                  variant="small"
+                                  className="font-normal text-right"
+                                >
+                                  {dayjs(t.createdAt).format(
+                                    "MMM D, YYYY h:mm A"
+                                  )}
+                                </Typography>
+
+                                {t.fullCover && (
+                                  <>
+                                    <Typography
+                                      variant="small"
+                                      className="font-semibold text-gray-800"
+                                    >
+                                      Full cover
+                                    </Typography>
+                                    <Typography
+                                      variant="small"
+                                      className="font-normal text-right"
+                                    >
+                                      Yes
+                                    </Typography>
+                                  </>
                                 )}
-                              >
-                                {formatAmount(t.amount)}
-                              </Typography>
+                              </div>
+
+                              <div className="my-4 border-t border-gray-300" />
+                              <div className="flex items-center justify-between">
+                                <Typography
+                                  variant="small"
+                                  className="font-semibold text-gray-800"
+                                >
+                                  Amount
+                                </Typography>
+                                <Typography
+                                  variant="small"
+                                  className={twMerge(
+                                    "font-normal",
+                                    Number(t.amount) < 0 ? "" : "text-green-700"
+                                  )}
+                                >
+                                  {formatAmount(t.amount)}
+                                </Typography>
+                              </div>
+
+                              <div className="mt-4 flex justify-start gap-3">
+                                {canDelete && (
+                                  <Button
+                                    color="red"
+                                    size="sm"
+                                    variant="outlined"
+                                    onClick={() =>
+                                      navigate(
+                                        `/my/space/${id}/transactions/${t.id}/delete`,
+                                        { state: { transaction: t } }
+                                      )
+                                    }
+                                  >
+                                    <FontAwesomeIcon
+                                      icon={faTrash}
+                                      className="mr-2"
+                                    />
+                                    Delete
+                                  </Button>
+                                )}
+                              </div>
                             </div>
-                          </div>
+                          )}
+                          <div className="my-2 border-b border-gray-300" />
                         </div>
-                      </ListItem>
-                    ))}
-                  </ul>
-                </Card>
+                      );
+                    })}
+                  </List>
+                </div>
               ))}
 
               {txQuery.hasNextPage && (
-                <div className="flex justify-center">
+                <div className="flex justify-center py-4">
                   <MTButton
                     variant="outlined"
                     onClick={() => txQuery.fetchNextPage()}
-                    disabled={txQuery.isFetchingNextPage}
+                    loading={txQuery.isFetchingNextPage}
                     className="bg-white"
                   >
-                    {txQuery.isFetchingNextPage ? "Loading..." : "Load more"}
+                    Load more
                   </MTButton>
                 </div>
               )}
@@ -236,129 +383,6 @@ export const SpacePage: React.FC = () => {
           )}
         </div>
       </div>
-
-      {/* Details dialog */}
-      <Dialog open={!!selected} handler={() => setSelected(null)} size="sm">
-        <DialogHeader className="p-4">
-          <div className="flex items-center gap-4 w-full pr-5">
-            <Avatar
-              src={selected?.creator?.avatarUrl || undefined}
-              alt={selected?.creator?.name || "User"}
-              variant="circular"
-              className="h-10 w-10"
-            />
-            <div>
-              <Typography variant="h6" className="font-semibold text-gray-900">
-                {selected?.title || ""}
-              </Typography>
-              <Typography variant="small" className="text-gray-600">
-                {selected?.creator?.name || ""}
-              </Typography>
-            </div>
-            <div className="ml-auto text-right">
-              <Typography
-                variant="h6"
-                className={
-                  Number(selected?.amount || 0) < 0
-                    ? "text-gray-900"
-                    : "text-green-700"
-                }
-              >
-                {selected ? formatAmount(selected.amount) : ""}
-              </Typography>
-            </div>
-          </div>
-        </DialogHeader>
-        <DialogBody className="px-5 pb-6">
-          {selected?.description && (
-            <div className="mb-3">
-              <Typography
-                variant="small"
-                className="font-semibold text-gray-800"
-              >
-                Description
-              </Typography>
-              <Typography variant="small" className="text-gray-700">
-                {selected.description || ""}
-              </Typography>
-            </div>
-          )}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Typography
-                variant="small"
-                className="font-semibold text-gray-800"
-              >
-                Occurred on
-              </Typography>
-              <Typography variant="small" className="text-gray-700">
-                {dayjs(selected?.occurredAt).format("MMM D, YYYY")}
-              </Typography>
-            </div>
-            <div>
-              <Typography
-                variant="small"
-                className="font-semibold text-gray-800"
-              >
-                Created at
-              </Typography>
-              <Typography variant="small" className="text-gray-700">
-                {dayjs(selected?.createdAt).format("MMM D, YYYY h:mm A")}
-              </Typography>
-            </div>
-            <div className="col-span-2">
-              <Typography
-                variant="small"
-                className="font-semibold text-gray-800"
-              >
-                Full cover
-              </Typography>
-              <Typography variant="small" className="text-gray-700">
-                {selected?.fullCover ? "Yes" : "No"}
-              </Typography>
-            </div>
-          </div>
-
-          {/* Actions */}
-          {!!selected && (
-            <div className="mt-6 flex justify-end gap-3">
-              {(() => {
-                const currentUserId = (user as any)?.id as number | undefined;
-                const isCreator =
-                  currentUserId && selected.creator?.id === currentUserId;
-                const isSpaceAdmin = space?.role === "admin";
-                const canDelete = Boolean(isCreator || isSpaceAdmin);
-                return canDelete ? (
-                  <Button
-                    color="red"
-                    size="sm"
-                    variant="outlined"
-                    onClick={() =>
-                      navigate(
-                        `/my/space/${id}/transactions/${selected.id}/delete`,
-                        {
-                          state: { transaction: selected },
-                        }
-                      )
-                    }
-                  >
-                    <FontAwesomeIcon icon={faTrash} className="mr-2" />
-                    Delete
-                  </Button>
-                ) : null;
-              })()}
-              <Button
-                variant="text"
-                color="gray"
-                size="sm"
-                onClick={() => setSelected(null)}
-              >
-                Close
-              </Button>
-            </div>
-          )}
-        </DialogBody>
-      </Dialog>
     </div>
   );
 };
