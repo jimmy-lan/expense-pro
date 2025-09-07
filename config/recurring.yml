@@ -17,3 +17,9 @@ production:
     class: PurgeDeletedSpacesJob
     args: [{ batch_size: 500 }]
     schedule: at 3am every day on America/Vancouver
+
+development:
+  purge_deleted_spaces:
+    class: PurgeDeletedSpacesJob
+    args: [{ batch_size: 500 }]
+    schedule: at 3am every day on America/Vancouver
