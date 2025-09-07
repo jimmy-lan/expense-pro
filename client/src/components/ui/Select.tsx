@@ -72,6 +72,9 @@ export const Select = React.forwardRef<NativeMTSelectRef, AppSelectProps>(
               labelProps={{
                 className: BASE_LABEL_CLASSES,
               }}
+              menuProps={{
+                className: "p-2 flex flex-col gap-1",
+              }}
               ref={ref}
               {...rest}
             >
@@ -92,7 +95,13 @@ Select.displayName = "Select";
 export const Option = React.forwardRef<NativeMTOptionRef, NativeMTOptionProps>(
   (props, ref) => {
     const { className, ...rest } = props;
-    return <MTOption className={twMerge("", className)} {...rest} ref={ref} />;
+    return (
+      <MTOption
+        className={twMerge("px-2 py-4", className)}
+        {...rest}
+        ref={ref}
+      />
+    );
   }
 );
 
