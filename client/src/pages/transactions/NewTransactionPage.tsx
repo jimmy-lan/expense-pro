@@ -1,8 +1,9 @@
 import React from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AppNavbar } from "../../components";
-import { Select, Typography, Option } from "@material-tailwind/react";
+import { Typography } from "@material-tailwind/react";
 import { Input, TextArea } from "../../components/ui/Input";
+import { Select, Option } from "../../components/ui/Select";
 import { Button } from "../../components/ui/Button";
 import dayjs from "dayjs";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -17,7 +18,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 type TxType = "spend" | "credit";
 
 interface NewTxFormValues {
-  type: TxType;
+  type: TxType | "";
   title: string;
   description?: string | null;
   amount: string;
@@ -108,30 +109,16 @@ export const NewTransactionPage: React.FC = () => {
           onSubmit={handleSubmit(onSubmit)}
           className="grid grid-cols-1 gap-4 py-4"
         >
-          <div>
-            <Controller
-              name="type"
-              control={control}
-              render={({ field }) => (
-                <Select
-                  label="Type"
-                  variant="outlined"
-                  size="lg"
-                  value={field.value}
-                  onChange={(val) => field.onChange((val as TxType) || "spend")}
-                  containerProps={{ className: "h-14" }}
-                >
-                  <Option value="spend">Spend</Option>
-                  <Option value="credit">Credit</Option>
-                </Select>
-              )}
-            />
-            {errors.type && (
-              <p className="mt-1 text-xs text-red-600">
-                {errors.type.message as string}
-              </p>
-            )}
-          </div>
+          <Select
+            label="Type"
+            name="type"
+            helperText={errors.type?.message}
+            control={control}
+            error={!!errors.type}
+          >
+            <Option value="spend">Spend</Option>
+            <Option value="credit">Credit</Option>
+          </Select>
 
           <div>
             <Input
