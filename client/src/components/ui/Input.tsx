@@ -17,8 +17,13 @@ type NativeMTTextareaRef = React.ElementRef<typeof MTTextarea>;
 const BASE_CONTAINER_CLASSES =
   "!border focus-within:!border-2 border-gray-400 rounded-md focus-within:border-primary overflow-hidden hover:border-primary";
 
-const BASE_LABEL_CLASSES =
-  "top-[-0.3rem] peer-[:not(:placeholder-shown)]:top-2 peer-focus:top-2 peer-focus:text-primary font-semibold left-4 after:border-none";
+const BASE_LABEL_CLASSES = `
+  top-[-0.3rem]
+  peer-[:not(:placeholder-shown)]:top-2 peer-focus:top-2
+  peer-focus:text-primary
+  font-semibold left-4
+  after:border-none
+`;
 
 export type AppInputProps = Omit<
   NativeMTInputProps,
