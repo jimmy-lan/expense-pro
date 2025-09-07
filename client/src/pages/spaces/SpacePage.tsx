@@ -3,8 +3,6 @@ import { useNavigate, useParams } from "react-router-dom";
 import {
   Avatar,
   Button as MTButton,
-  Card,
-  CardBody,
   Typography,
   List,
   ListItem,
@@ -29,6 +27,7 @@ import {
   faArrowLeft,
   faTrash,
   faChevronDown,
+  faGift,
 } from "@fortawesome/free-solid-svg-icons";
 import { twMerge } from "tailwind-merge";
 
@@ -158,229 +157,239 @@ export const SpacePage: React.FC = () => {
             </div>
           )}
 
-          {transactions.length === 0 && !txQuery.isLoading ? (
-            <Card className="shadow-sm">
-              <CardBody className="p-6 text-center text-gray-700">
-                No transactions yet.
-              </CardBody>
-            </Card>
-          ) : (
-            <div className="flex flex-col">
-              <Typography variant="h4" as="h1" className="ml-1 mb-6">
-                Activity
-              </Typography>
+          <div className="flex flex-col">
+            <Typography variant="h4" as="h1" className="mb-6">
+              Activity
+            </Typography>
 
-              {transactions.map((group) => (
-                <div key={group.key} className="">
-                  <div className="px-1 py-3">
-                    <Typography
-                      variant="h5"
-                      as="h2"
-                      className="font-semibold text-gray-700"
-                    >
-                      {group.header}
-                    </Typography>
-                  </div>
-                  <List>
-                    {group.items.map((t) => {
-                      const isExpanded = expandedId === t.id;
-                      const currentUserId = (user as any)?.id as
-                        | number
-                        | undefined;
-                      const isCreator =
-                        currentUserId && t.creator?.id === currentUserId;
-                      const isSpaceAdmin = space?.role === "admin";
-                      const canDelete = Boolean(isCreator || isSpaceAdmin);
+            {transactions.length === 0 && (
+              <div className="text-gray-700">No transactions yet.</div>
+            )}
 
-                      return (
-                        <div key={t.id}>
-                          <ListItem className="py-1 px-2">
-                            <button
-                              type="button"
-                              className={
-                                "w-full flex items-center gap-4 text-left"
-                              }
-                              onClick={() =>
-                                setExpandedId((prev) =>
-                                  prev === t.id ? null : t.id
-                                )
-                              }
-                              aria-expanded={isExpanded}
-                            >
-                              <Avatar
-                                src={t.creator?.avatarUrl || undefined}
-                                alt={t.creator?.name || "User"}
-                                variant="circular"
-                                className="h-8 w-8"
-                              />
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center justify-between gap-3">
-                                  <div>
-                                    <Typography
-                                      variant="paragraph"
-                                      className="font-semibold text-gray-900 truncate"
-                                    >
-                                      {t.title}
-                                    </Typography>
-                                    <div className="mt-0.5 text-sm text-gray-600 truncate">
-                                      {t.creator?.name || "Unknown"}
-                                    </div>
+            {transactions.map((group) => (
+              <div key={group.key}>
+                <div className="py-3">
+                  <Typography
+                    variant="h5"
+                    as="h2"
+                    className="font-semibold text-gray-700"
+                  >
+                    {group.header}
+                  </Typography>
+                </div>
+                <List className="px-0">
+                  {group.items.map((t) => {
+                    const isExpanded = expandedId === t.id;
+                    const currentUserId = (user as any)?.id as
+                      | number
+                      | undefined;
+                    const isCreator =
+                      currentUserId && t.creator?.id === currentUserId;
+                    const isSpaceAdmin = space?.role === "admin";
+                    const canDelete = Boolean(isCreator || isSpaceAdmin);
+
+                    return (
+                      <div key={t.id}>
+                        <ListItem className="py-1 px-2">
+                          <button
+                            type="button"
+                            className={
+                              "w-full flex items-center gap-4 text-left"
+                            }
+                            onClick={() =>
+                              setExpandedId((prev) =>
+                                prev === t.id ? null : t.id
+                              )
+                            }
+                            aria-expanded={isExpanded}
+                          >
+                            <Avatar
+                              src={t.creator?.avatarUrl || undefined}
+                              alt={t.creator?.name || "User"}
+                              variant="circular"
+                              className="h-8 w-8"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between gap-3">
+                                <div>
+                                  <Typography
+                                    variant="paragraph"
+                                    className="font-semibold text-gray-900 truncate"
+                                  >
+                                    {t.title}
+                                  </Typography>
+                                  <div className="mt-0.5 text-sm text-gray-600 truncate">
+                                    {t.creator?.name || "Unknown"}
                                   </div>
-                                  <div className="text-right">
-                                    <Typography
-                                      variant="paragraph"
-                                      className={twMerge(
-                                        "font-semibold",
-                                        Number(t.amount) < 0
-                                          ? "text-gray-900"
-                                          : "text-green-700"
-                                      )}
-                                    >
-                                      {formatAmount(t.amount)}
-                                    </Typography>
+                                </div>
+                                <div className="text-right">
+                                  <Typography
+                                    variant="paragraph"
+                                    className={twMerge(
+                                      "font-semibold",
+                                      Number(t.amount) < 0
+                                        ? "text-gray-900"
+                                        : "text-green-700"
+                                    )}
+                                  >
+                                    {formatAmount(t.amount)}
+                                  </Typography>
+                                  <div className="flex items-center justify-end gap-2 mt-1">
+                                    {t.fullCover && (
+                                      <FontAwesomeIcon
+                                        icon={faGift}
+                                        className="w-3 h-3"
+                                      />
+                                    )}
                                     <FontAwesomeIcon
                                       icon={faChevronDown}
                                       className={twMerge(
-                                        "ml-auto mt-1 text-gray-500 transition-transform",
+                                        "text-gray-500 transition-transform",
                                         isExpanded ? "rotate-180" : "rotate-0"
                                       )}
                                     />
                                   </div>
                                 </div>
                               </div>
-                            </button>
-                          </ListItem>
+                            </div>
+                          </button>
+                        </ListItem>
 
-                          {isExpanded && (
-                            <div className="pt-6 md:pt-4 px-2 pb-2 md:pl-14">
-                              {t.description && (
-                                <div className="mb-3">
+                        {isExpanded && (
+                          <div className="pt-6 md:pt-4 px-2 pb-2 md:pl-14">
+                            {t.description && (
+                              <div className="mb-3">
+                                <Typography
+                                  variant="small"
+                                  className="font-semibold text-gray-800"
+                                >
+                                  Description
+                                </Typography>
+                                <Typography
+                                  variant="small"
+                                  className="text-gray-700"
+                                >
+                                  {t.description}
+                                </Typography>
+                              </div>
+                            )}
+
+                            <div className="grid grid-cols-2 gap-y-2">
+                              <Typography
+                                variant="small"
+                                className="font-semibold text-gray-800"
+                              >
+                                Occurred on
+                              </Typography>
+                              <Typography
+                                variant="small"
+                                className="font-normal text-right"
+                              >
+                                {dayjs(t.occurredAt).format("MMM D, YYYY")}
+                              </Typography>
+
+                              <Typography
+                                variant="small"
+                                className="font-semibold text-gray-800"
+                              >
+                                Created at
+                              </Typography>
+                              <Typography
+                                variant="small"
+                                className="font-normal text-right"
+                              >
+                                {dayjs(t.createdAt).format(
+                                  "MMM D, YYYY h:mm A"
+                                )}
+                              </Typography>
+
+                              {t.fullCover && (
+                                <>
                                   <Typography
                                     variant="small"
                                     className="font-semibold text-gray-800"
                                   >
-                                    Description
+                                    Full cover
                                   </Typography>
-                                  <Typography
-                                    variant="small"
-                                    className="text-gray-700"
-                                  >
-                                    {t.description}
-                                  </Typography>
-                                </div>
-                              )}
-
-                              <div className="grid grid-cols-2 gap-y-2">
-                                <Typography
-                                  variant="small"
-                                  className="font-semibold text-gray-800"
-                                >
-                                  Occurred on
-                                </Typography>
-                                <Typography
-                                  variant="small"
-                                  className="font-normal text-right"
-                                >
-                                  {dayjs(t.occurredAt).format("MMM D, YYYY")}
-                                </Typography>
-
-                                <Typography
-                                  variant="small"
-                                  className="font-semibold text-gray-800"
-                                >
-                                  Created at
-                                </Typography>
-                                <Typography
-                                  variant="small"
-                                  className="font-normal text-right"
-                                >
-                                  {dayjs(t.createdAt).format(
-                                    "MMM D, YYYY h:mm A"
-                                  )}
-                                </Typography>
-
-                                {t.fullCover && (
-                                  <>
+                                  <div className="flex justify-end items-center gap-2">
+                                    <FontAwesomeIcon
+                                      icon={faGift}
+                                      className="h-3 w-3"
+                                    />
                                     <Typography
                                       variant="small"
-                                      className="font-semibold text-gray-800"
-                                    >
-                                      Full cover
-                                    </Typography>
-                                    <Typography
-                                      variant="small"
-                                      className="font-normal text-right"
+                                      className="font-normal inline-block text-right"
                                     >
                                       Yes
                                     </Typography>
-                                  </>
-                                )}
-                              </div>
-
-                              <div className="my-4 border-t border-gray-300" />
-                              <div className="flex items-center justify-between">
-                                <Typography
-                                  variant="small"
-                                  className="font-semibold text-gray-800"
-                                >
-                                  Amount
-                                </Typography>
-                                <Typography
-                                  variant="small"
-                                  className={twMerge(
-                                    "font-normal",
-                                    Number(t.amount) < 0 ? "" : "text-green-700"
-                                  )}
-                                >
-                                  {formatAmount(t.amount)}
-                                </Typography>
-                              </div>
-
-                              <div className="mt-4 flex justify-start gap-3">
-                                {canDelete && (
-                                  <Button
-                                    color="red"
-                                    size="sm"
-                                    variant="outlined"
-                                    onClick={() =>
-                                      navigate(
-                                        `/my/space/${id}/transactions/${t.id}/delete`,
-                                        { state: { transaction: t } }
-                                      )
-                                    }
-                                  >
-                                    <FontAwesomeIcon
-                                      icon={faTrash}
-                                      className="mr-2"
-                                    />
-                                    Delete
-                                  </Button>
-                                )}
-                              </div>
+                                  </div>
+                                </>
+                              )}
                             </div>
-                          )}
-                          <div className="my-2 border-b border-gray-300" />
-                        </div>
-                      );
-                    })}
-                  </List>
-                </div>
-              ))}
 
-              {txQuery.hasNextPage && (
-                <div className="flex justify-center py-4">
-                  <MTButton
-                    variant="outlined"
-                    onClick={() => txQuery.fetchNextPage()}
-                    loading={txQuery.isFetchingNextPage}
-                    className="bg-white"
-                  >
-                    Load more
-                  </MTButton>
-                </div>
-              )}
-            </div>
-          )}
+                            <div className="my-4 border-t border-gray-300" />
+                            <div className="flex items-center justify-between">
+                              <Typography
+                                variant="small"
+                                className="font-semibold text-gray-800"
+                              >
+                                Amount
+                              </Typography>
+                              <Typography
+                                variant="small"
+                                className={twMerge(
+                                  "font-normal",
+                                  Number(t.amount) < 0 ? "" : "text-green-700"
+                                )}
+                              >
+                                {formatAmount(t.amount)}
+                              </Typography>
+                            </div>
+
+                            <div className="mt-4 flex justify-start gap-3">
+                              {canDelete && (
+                                <Button
+                                  color="red"
+                                  size="sm"
+                                  variant="outlined"
+                                  onClick={() =>
+                                    navigate(
+                                      `/my/space/${id}/transactions/${t.id}/delete`,
+                                      { state: { transaction: t } }
+                                    )
+                                  }
+                                >
+                                  <FontAwesomeIcon
+                                    icon={faTrash}
+                                    className="mr-2"
+                                  />
+                                  Delete
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                        <div className="my-2 border-b border-gray-300" />
+                      </div>
+                    );
+                  })}
+                </List>
+              </div>
+            ))}
+
+            {txQuery.hasNextPage && (
+              <div className="flex justify-center py-4">
+                <MTButton
+                  variant="outlined"
+                  onClick={() => txQuery.fetchNextPage()}
+                  loading={txQuery.isFetchingNextPage}
+                  className="bg-white"
+                >
+                  Load more
+                </MTButton>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
