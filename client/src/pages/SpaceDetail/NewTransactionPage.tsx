@@ -53,6 +53,10 @@ export const NewTransactionPage: React.FC = () => {
 
   useScrollTopOnMount();
 
+  const closePage = () => {
+    window.history.state?.idx > 0 ? navigate(-1) : navigate(`/my/space/${id}`);
+  };
+
   const {
     control,
     register,
@@ -92,7 +96,7 @@ export const NewTransactionPage: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions", id] });
-      navigate(`/my/space/${id}`);
+      closePage();
     },
   });
 
@@ -206,7 +210,7 @@ export const NewTransactionPage: React.FC = () => {
               type="button"
               variant="text"
               color="gray"
-              onClick={() => navigate(`/my/space/${id}`)}
+              onClick={closePage}
             >
               Cancel
             </Button>
