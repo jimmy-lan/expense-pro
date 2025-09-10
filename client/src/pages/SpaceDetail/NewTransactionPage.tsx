@@ -76,9 +76,11 @@ export const NewTransactionPage: React.FC = () => {
     },
   });
 
+  const type_ = watch("type");
+
   useEffect(() => {
     resetField("fullCover", { defaultValue: false });
-  }, [watch("type")]);
+  }, [resetField, type_]);
 
   const mutation = useMutation({
     mutationFn: async (values: NewTxFormValues) => {
@@ -172,7 +174,7 @@ export const NewTransactionPage: React.FC = () => {
             />
           </div>
 
-          {watch("type") === "spend" && (
+          {type_ === "spend" && (
             <div className="!border border-gray-400 rounded-md overflow-hidden hover:border-primary transition-border duration-300 p-2 md:p-3">
               <Checkbox
                 color="blue"
