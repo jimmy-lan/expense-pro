@@ -177,7 +177,12 @@ export const SpacePage: React.FC = () => {
                     {group.items.map((t) => (
                       <ListItem
                         key={t.id}
-                        className="p-6 rounded-none border-gray-100 bg-white active:bg-gray-50 cursor-pointer"
+                        className={twMerge(
+                          "p-6 rounded-none border-gray-100 cursor-pointer",
+                          t.fullCover 
+                            ? "bg-blue-50/50 active:bg-blue-100/50" 
+                            : "bg-white active:bg-gray-50"
+                        )}
                         onClick={() => setSelected(t)}
                       >
                         <div className="flex items-center gap-4 w-full">
@@ -239,7 +244,10 @@ export const SpacePage: React.FC = () => {
 
       {/* Details dialog */}
       <Dialog open={!!selected} handler={() => setSelected(null)} size="sm">
-        <DialogHeader className="p-4">
+        <DialogHeader className={twMerge(
+          "p-4",
+          selected?.fullCover ? "bg-blue-50/50" : ""
+        )}>
           <div className="flex items-center gap-4 w-full pr-5">
             <Avatar
               src={selected?.creator?.avatarUrl || undefined}
