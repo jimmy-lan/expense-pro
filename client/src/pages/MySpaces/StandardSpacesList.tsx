@@ -143,7 +143,14 @@ export const StandardSpacesList: React.FC<{
         </div>
       )}
 
-      {allSpaces.length === 0 && !spacesQuery.isLoading ? (
+      {spacesQuery.isLoading ? (
+        <div className="flex justify-center items-center py-12">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading... =^ω^=</p>
+          </div>
+        </div>
+      ) : allSpaces.length === 0 ? (
         <EmptySpacesIndicator
           title="No spaces yet"
           subtitle="Create a space from the app to get started."
