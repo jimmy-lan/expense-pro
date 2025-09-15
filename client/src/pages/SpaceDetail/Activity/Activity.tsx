@@ -10,9 +10,9 @@ import {
   type TransactionDto,
   type TransactionsResponse,
   type SpaceDto,
-} from "../../lib/api";
-import { Transaction } from "./Activity/Transaction";
-import { Button } from "../../components/ui/Button";
+} from "../../../lib/api";
+import { Transaction } from "./Transaction";
+import { Button } from "../../../components/ui/Button";
 
 // dayjs plugins
 (dayjs as any).extend(relativeTime);
