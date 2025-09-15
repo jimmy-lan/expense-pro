@@ -123,6 +123,24 @@ export interface RecentlyDeletedSpacesResponse {
   hasMore: boolean;
 }
 
+export interface SpaceSummaryMemberDto {
+  id: number;
+  name: string;
+  avatarUrl?: string | null;
+  spendAmount: string; // $xx.xx
+  creditAmount: string; // $xx.xx
+  fullCoverAmount: string; // $xx.xx
+  transactionsCount: number;
+}
+export interface SpaceSummaryDto {
+  space: {
+    totalTransactions: number;
+    totalSpend: string; // $xx.xx
+    totalCredit: string; // $xx.xx
+  };
+  members: SpaceSummaryMemberDto[];
+}
+
 export const spacesApi = {
   list: async (params: { filter: SpacesFilter; cursor?: string | null }) => {
     const url = new URL(`/api/v1/spaces`, window.location.origin);
@@ -222,6 +240,12 @@ export const spacesApi = {
     return apiFetch<{ space: SpaceDto }>(`/api/v1/spaces/${spaceId}`, {
       method: "GET",
     });
+  },
+  summary: async (spaceId: number) => {
+    return apiFetch<{ summary: SpaceSummaryDto }>(
+      `/api/v1/spaces/${spaceId}/summary`,
+      { method: "GET" }
+    );
   },
 };
 

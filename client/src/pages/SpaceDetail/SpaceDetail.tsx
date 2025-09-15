@@ -1,13 +1,14 @@
 import React from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Typography } from "@material-tailwind/react";
-import { AppNavbar } from "../../components";
+import { AppNavbar, SectionTabs, type TabItemConfig } from "../../components";
 import { Button } from "../../components/ui/Button";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus, faArrowLeft } from "@fortawesome/free-solid-svg-icons";
 import { useQuery } from "@tanstack/react-query";
 import { spacesApi } from "../../lib/api";
 import { Activity } from "./Activity";
+import { Summary } from "./Summary";
 
 export const SpaceDetail: React.FC = () => {
   const { spaceId } = useParams();
@@ -22,12 +23,25 @@ export const SpaceDetail: React.FC = () => {
 
   const space = spaceQuery.data?.space;
 
+  const TAB_DATA: TabItemConfig[] = [
+    {
+      label: "Activity",
+      value: "activity",
+      content: <Activity spaceId={id} space={space} />,
+    },
+    {
+      label: "Summary",
+      value: "summary",
+      content: <Summary spaceId={id} />,
+    },
+  ];
+
   return (
     <div className="min-h-screen-safe bg-gray-50">
       <AppNavbar />
 
       <div className="mx-auto px-4 py-6 md:px-8 lg:px-12 2xl:px-16">
-        <div className="mb-6 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+        <div className="mb-8 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div>
             <div className="mb-1">
               <Button
@@ -71,7 +85,8 @@ export const SpaceDetail: React.FC = () => {
             </Button>
           </div>
         </div>
-        <Activity spaceId={id} space={space} />
+
+        <SectionTabs data={TAB_DATA} />
       </div>
     </div>
   );

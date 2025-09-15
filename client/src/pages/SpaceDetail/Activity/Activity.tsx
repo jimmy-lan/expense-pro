@@ -70,7 +70,7 @@ export const Activity: React.FC<Props> = ({ spaceId, space }) => {
   const [expandedId, setExpandedId] = useState<number | null>(null);
 
   return (
-    <div className="mt-10">
+    <div>
       {txQuery.isError && (
         <div className="mb-4 p-4 text-red-700 bg-red-50 border border-red-100 rounded">
           {(txQuery.error as any)?.message || "Failed to load transactions"}
@@ -78,10 +78,6 @@ export const Activity: React.FC<Props> = ({ spaceId, space }) => {
       )}
 
       <div className="flex flex-col">
-        <Typography variant="h4" as="h1" className="mb-6">
-          Activity
-        </Typography>
-
         {transactions.length === 0 && (
           <div className="text-gray-700">No transactions yet.</div>
         )}

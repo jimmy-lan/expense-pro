@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_08_09_100000) do
+ActiveRecord::Schema[8.0].define(version: 2025_09_21_092000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -152,6 +152,19 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_09_100000) do
     t.index ["key"], name: "index_solid_queue_semaphores_on_key", unique: true
   end
 
+  create_table "space_member_contributions", force: :cascade do |t|
+    t.bigint "space_id", null: false
+    t.bigint "user_id", null: false
+    t.bigint "spend_cents", default: 0, null: false
+    t.bigint "credit_cents", default: 0, null: false
+    t.bigint "full_cover_cents", default: 0, null: false
+    t.integer "transactions_count", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["space_id", "user_id"], name: "index_contributions_on_space_and_user", unique: true
+    t.index ["space_id"], name: "index_space_member_contributions_on_space_id"
+  end
+
   create_table "space_memberships", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.bigint "space_id", null: false
@@ -175,6 +188,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_09_100000) do
     t.datetime "deleted_at"
     t.datetime "purge_after_at"
     t.string "color_hex", limit: 6
+    t.bigint "total_spend_cents", default: 0, null: false
+    t.bigint "total_credit_cents", default: 0, null: false
     t.index "lower((name)::text), created_by_id", name: "index_spaces_on_lower_name_and_created_by_id", unique: true
     t.index ["created_by_id"], name: "index_spaces_on_created_by_id"
     t.index ["deleted_at"], name: "index_spaces_on_deleted_at"
@@ -184,19 +199,18 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_09_100000) do
   create_table "transactions", force: :cascade do |t|
     t.string "title", limit: 100, null: false
     t.text "description"
-    t.string "amount", null: false
     t.datetime "occurred_at", null: false
     t.bigint "space_id", null: false
     t.bigint "creator_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.boolean "full_cover", default: false, null: false
+    t.bigint "amount_cents", null: false
     t.index ["creator_id"], name: "index_transactions_on_creator_id"
     t.index ["space_id", "created_at"], name: "index_transactions_on_space_and_created_at"
     t.index ["space_id", "occurred_at", "id"], name: "index_transactions_on_space_and_occurred_at_and_id"
     t.index ["space_id", "occurred_at"], name: "index_transactions_on_space_and_occurred_at"
     t.index ["space_id"], name: "index_transactions_on_space_id"
-    t.check_constraint "amount::text ~ '^[-]?[0-9]+(\\.[0-9]{1,2})?$'::text", name: "transactions_amount_decimal_string"
   end
 
   create_table "users", force: :cascade do |t|
@@ -220,6 +234,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_09_100000) do
   add_foreign_key "solid_queue_ready_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_recurring_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_scheduled_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
+  add_foreign_key "space_member_contributions", "spaces"
+  add_foreign_key "space_member_contributions", "users"
   add_foreign_key "space_memberships", "spaces"
   add_foreign_key "space_memberships", "users"
   add_foreign_key "spaces", "users", column: "created_by_id"

@@ -114,11 +114,13 @@ class Api::V1::TransactionsController < ApplicationController
 
   def serialize_transaction(t)
     creator_full_name = [ t.creator&.first_name, t.creator&.last_name ].compact.join(" ")
+    amount_str = format("%.2f", t.amount_cents.to_i / 100.0)
+
     {
       id: t.id,
       title: t.title,
       description: t.description,
-      amount: t.amount,
+      amount: amount_str,
       occurredAt: t.occurred_at,
       createdAt: t.created_at,
       creator: {

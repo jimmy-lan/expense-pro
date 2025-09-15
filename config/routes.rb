@@ -25,6 +25,7 @@ Rails.application.routes.draw do
           delete :remove_member
           post :recover
           delete :purge
+          get :summary
         end
 
         resources :transactions, only: [ :index, :create, :show, :destroy ]

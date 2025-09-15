@@ -134,7 +134,6 @@ class Api::V1::SpacesController < ApplicationController
 
     begin
       SpaceMembership.transaction do
-        # Lock the space row to prevent concurrent capacity checks
         space.reload.lock!
 
         if space.deleted_at.present?
@@ -396,6 +395,52 @@ class Api::V1::SpacesController < ApplicationController
     render json: { space: serialize_space(space) }
   end
 
+  # Summary for a space (aggregated contributions and per-member stats)
+  def summary
+    membership = SpaceMembership
+      .joins(:space)
+      .includes(:space)
+      .where(space_id: params[:id], user_id: current_user.id)
+      .where(spaces: { deleted_at: nil })
+      .first
+
+    unless membership
+      render json: { error: "Space not found" }, status: :not_found
+      return
+    end
+
+    space = membership.space
+
+    contribs = SpaceMemberContribution
+      .left_outer_joins(:user)
+      .includes(:user)
+      .where(space_id: space.id)
+    total_transactions = space.transactions_count
+
+    members = contribs.map do |c|
+      {
+        id: c.user_id,
+        name: [ c.user&.first_name, c.user&.last_name ].compact.join(" "),
+        avatarUrl: c.user&.avatar_url,
+        spendAmount: format_cents(c.spend_cents),
+        creditAmount: format_cents(c.credit_cents),
+        fullCoverAmount: format_cents(c.full_cover_cents),
+        transactionsCount: c.transactions_count
+      }
+    end
+
+    render json: {
+      summary: {
+        space: {
+          totalTransactions: total_transactions,
+          totalSpend: format_cents(space.total_spend_cents.to_i),
+          totalCredit: format_cents(space.total_credit_cents.to_i)
+        },
+        members: members
+      }
+    }
+  end
+
   private
 
   def spaces_scope_for_filter(filter)
@@ -560,5 +605,11 @@ class Api::V1::SpacesController < ApplicationController
     request.body = payload.to_json
 
     http.request(request)
+  end
+
+  def format_cents(cents)
+    sign = cents < 0 ? "-" : ""
+    amount = (cents.abs.to_f / 100.0)
+    "#{sign}$#{format('%.2f', amount)}"
   end
 end
