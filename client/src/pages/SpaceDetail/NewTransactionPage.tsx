@@ -1,13 +1,14 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AppNavbar } from "../../components";
-import { Select, Typography, Option } from "@material-tailwind/react";
+import { Checkbox, Typography } from "@material-tailwind/react";
 import { Input, TextArea } from "../../components/ui/Input";
+import { Select, Option } from "../../components/ui/Select";
 import { Button } from "../../components/ui/Button";
 import dayjs from "dayjs";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { transactionsApi } from "../../lib/api";
-import { Controller, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { useScrollTopOnMount } from "../../hooks";
@@ -17,7 +18,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 type TxType = "spend" | "credit";
 
 interface NewTxFormValues {
-  type: TxType;
+  type: TxType | "";
   title: string;
   description?: string | null;
   amount: string;
@@ -52,11 +53,17 @@ export const NewTransactionPage: React.FC = () => {
 
   useScrollTopOnMount();
 
+  const closePage = () => {
+    window.history.state?.idx > 0 ? navigate(-1) : navigate(`/my/space/${id}`);
+  };
+
   const {
     control,
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
+    watch,
+    resetField,
   } = useForm<NewTxFormValues>({
     resolver: yupResolver(schema),
     defaultValues: {
@@ -68,6 +75,12 @@ export const NewTransactionPage: React.FC = () => {
       fullCover: false,
     },
   });
+
+  const type_ = watch("type");
+
+  useEffect(() => {
+    resetField("fullCover", { defaultValue: false });
+  }, [resetField, type_]);
 
   const mutation = useMutation({
     mutationFn: async (values: NewTxFormValues) => {
@@ -85,7 +98,7 @@ export const NewTransactionPage: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions", id] });
-      navigate(`/my/space/${id}`);
+      closePage();
     },
   });
 
@@ -108,30 +121,20 @@ export const NewTransactionPage: React.FC = () => {
           onSubmit={handleSubmit(onSubmit)}
           className="grid grid-cols-1 gap-4 py-4"
         >
-          <div>
-            <Controller
-              name="type"
-              control={control}
-              render={({ field }) => (
-                <Select
-                  label="Type"
-                  variant="outlined"
-                  size="lg"
-                  value={field.value}
-                  onChange={(val) => field.onChange((val as TxType) || "spend")}
-                  containerProps={{ className: "h-14" }}
-                >
-                  <Option value="spend">Spend</Option>
-                  <Option value="credit">Credit</Option>
-                </Select>
-              )}
-            />
-            {errors.type && (
-              <p className="mt-1 text-xs text-red-600">
-                {errors.type.message as string}
-              </p>
-            )}
-          </div>
+          <Select
+            label="Type"
+            name="type"
+            helperText={errors.type?.message}
+            control={control}
+            error={!!errors.type}
+          >
+            <Option value="spend">
+              <span className="text-deep-orange-800">Spend</span>
+            </Option>
+            <Option value="credit">
+              <span className="text-green-800">Credit</span>
+            </Option>
+          </Select>
 
           <div>
             <Input
@@ -171,26 +174,25 @@ export const NewTransactionPage: React.FC = () => {
             />
           </div>
 
-          <div className="flex items-start sm:items-center gap-3">
-            <input
-              id="fullCover"
-              type="checkbox"
-              className="mt-1 h-5 w-5 rounded border-gray-400 text-primary focus:ring-primary"
-              {...register("fullCover")}
-            />
-            <div className="flex-1">
-              <label
-                htmlFor="fullCover"
-                className="block text-gray-800 font-medium"
-              >
-                Full cover
-              </label>
-              <p className="text-gray-600 text-sm mt-0.5">
-                If enabled, the creator covers the entire cost. No splitting
-                needed.
-              </p>
+          {type_ === "spend" && (
+            <div className="!border border-gray-400 rounded-md overflow-hidden hover:border-primary transition-border duration-300 p-2 md:p-3">
+              <Checkbox
+                color="blue"
+                label={
+                  <div className="ml-1">
+                    <Typography className="w-full font-medium text-gray-800">
+                      Full cover
+                    </Typography>
+                    <Typography variant="small" className="text-gray-600">
+                      If enabled, the creator covers the entire cost. No
+                      splitting needed.
+                    </Typography>
+                  </div>
+                }
+                {...register("fullCover")}
+              />
             </div>
-          </div>
+          )}
 
           {mutation.isError && (
             <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
@@ -210,7 +212,7 @@ export const NewTransactionPage: React.FC = () => {
               type="button"
               variant="text"
               color="gray"
-              onClick={() => navigate(`/my/space/${id}`)}
+              onClick={closePage}
             >
               Cancel
             </Button>

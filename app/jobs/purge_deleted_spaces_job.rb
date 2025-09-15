@@ -4,6 +4,7 @@ class PurgeDeletedSpacesJob < ApplicationJob
   # Hard-delete spaces whose purge_after_at is due
   def perform(batch_size: 500)
     cutoff = Time.current
+    Rails.logger.info("[PurgeDeletedSpacesJob] Purging spaces deleted before #{cutoff}.")
 
     Space.recently_deleted
       .where("purge_after_at IS NOT NULL AND purge_after_at <= ?", cutoff)

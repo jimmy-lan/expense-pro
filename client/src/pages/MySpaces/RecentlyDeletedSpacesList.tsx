@@ -21,6 +21,7 @@ import {
   MenuHandler,
   MenuItem,
   MenuList,
+  Spinner,
 } from "@material-tailwind/react";
 import { MySpacesHeader } from "./MySpacesHeader";
 import type { MenuKey } from "./menu";
@@ -137,7 +138,14 @@ export const RecentlyDeletedSpacesList: React.FC<{
         </div>
       )}
 
-      {allSpaces.length === 0 && !isLoading ? (
+      {isLoading ? (
+        <div className="flex justify-center items-center py-12">
+          <div className="text-center">
+            <Spinner color="blue" className="h-8 w-8 mx-auto mb-4" />
+            <p className="text-gray-600">Loading... =^ω^=</p>
+          </div>
+        </div>
+      ) : allSpaces.length === 0 ? (
         <EmptySpacesIndicator
           title="No recently deleted spaces"
           subtitle="Deleted spaces you own will appear here before they are permanently removed."

@@ -10,6 +10,7 @@ import {
   DialogHeader,
   Typography,
   ListItem,
+  Spinner,
 } from "@material-tailwind/react";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
@@ -121,7 +122,14 @@ export const SpacePage: React.FC = () => {
               </Button>
             </div>
             <Typography variant="h4" className="font-bold text-gray-900">
-              {spaceQuery.isLoading ? "Loading..." : space?.name || "Space"}
+              {spaceQuery.isLoading ? (
+                <div className="flex items-center gap-2">
+                  <Spinner color="blue" className="h-6 w-6" />
+                  Loading...
+                </div>
+              ) : (
+                space?.name || "Space"
+              )}
             </Typography>
             {spaceQuery.isError && (
               <Typography variant="small" className="text-red-700 mt-1">

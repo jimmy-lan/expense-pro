@@ -22,6 +22,12 @@ export const DeleteTransactionPage: React.FC = () => {
     | TransactionDto
     | undefined;
 
+  const closePage = () => {
+    window.history.state?.idx > 0
+      ? navigate(-1)
+      : navigate(`/my/space/${id}`, { replace: true });
+  };
+
   useScrollTopOnMount();
 
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -58,11 +64,11 @@ export const DeleteTransactionPage: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions", id] });
-      navigate(`/my/space/${id}`);
+      closePage();
     },
     onError: (err) => {
       if (err instanceof ApiError && err.status === 404) {
-        navigate(`/my/space/${id}`);
+        closePage();
         return;
       }
       setErrorMessage((err as any)?.message || "Failed to delete transaction");
@@ -138,7 +144,7 @@ export const DeleteTransactionPage: React.FC = () => {
           <Button
             variant="text"
             color="gray"
-            onClick={() => navigate(`/my/space/${id}`)}
+            onClick={closePage}
             disabled={mutation.isPending}
           >
             Cancel
