@@ -9,7 +9,7 @@ import {
 } from "@material-tailwind/react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faRightFromBracket } from "@fortawesome/free-solid-svg-icons";
+import { faRightFromBracket, faUser } from "@fortawesome/free-solid-svg-icons";
 import { Logo } from "./Logo";
 import { useUserInfo } from "../hooks";
 
@@ -32,6 +32,10 @@ export const AppNavbar: React.FC = () => {
   const goToLogoutConfirm = () => {
     const returnTo = encodeURIComponent(location.pathname + location.search);
     navigate("/logout/confirm", { state: { returnTo } });
+  };
+
+  const goToProfile = () => {
+    navigate("/profile");
   };
 
   return (
@@ -64,6 +68,13 @@ export const AppNavbar: React.FC = () => {
                 )}
               </div>
               <div className="my-2 h-px bg-gray-200" />
+              <MenuItem
+                onClick={goToProfile}
+                className="flex items-center gap-3"
+              >
+                <FontAwesomeIcon icon={faUser} />
+                <span>Profile</span>
+              </MenuItem>
               <MenuItem
                 onClick={goToLogoutConfirm}
                 className="flex items-center gap-3"

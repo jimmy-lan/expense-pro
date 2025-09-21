@@ -17,10 +17,31 @@ class Api::V1::UsersController < ApplicationController
     end
   end
 
+  def update_avatar
+    authenticate_user!
+    
+    if current_user.update(avatar_params)
+      render json: { user: serialize_user(current_user) }
+    else
+      render json: { errors: current_user.errors.full_messages }, status: :unprocessable_content
+    end
+  end
+
+  def remove_avatar
+    authenticate_user!
+    
+    current_user.avatar.purge if current_user.avatar.attached?
+    render json: { user: serialize_user(current_user) }
+  end
+
   private
 
   def user_params
     params.require(:user).permit(:email, :first_name, :last_name, :password, :password_confirmation)
+  end
+
+  def avatar_params
+    params.permit(:avatar)
   end
 
   def serialize_user(user)

@@ -8,6 +8,8 @@ class User < ApplicationRecord
   has_many :spaces, through: :space_memberships
   has_many :transactions, foreign_key: "creator_id", dependent: :nullify
 
+  has_one_attached :avatar
+
   before_validation :normalize_email
   before_validation :assign_default_plan, on: :create
   before_create :assign_avatar
@@ -19,6 +21,10 @@ class User < ApplicationRecord
   validates :plan, presence: true
 
   def avatar_url
+    # Return uploaded avatar if it exists
+    return Rails.application.routes.url_helpers.rails_blob_url(avatar, only_path: true) if avatar.attached?
+    
+    # Fallback to generated avatar
     bg = (avatar_bg_hex.presence || random_hex_color)
     fg = (avatar_fg.presence || contrast_color_for_hex(bg))
     initial = (first_name.to_s[0] || last_name.to_s[0] || email.to_s[0] || "U").upcase

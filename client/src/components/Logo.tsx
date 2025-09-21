@@ -26,9 +26,7 @@ const Logo: React.FC<LogoProps> = ({
   const isMobile = useBreakpoint("sm");
   const navigate = useNavigate();
   const handleLogoClick = () => {
-    if (!isMobile) {
-      navigate("/");
-    }
+    navigate("/my");
   };
 
   return (
