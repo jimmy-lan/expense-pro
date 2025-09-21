@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Typography } from "@material-tailwind/react";
+import { Typography, Spinner } from "@material-tailwind/react";
 import { AppNavbar } from "../../components";
 import { Button } from "../../components/ui/Button";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -41,13 +41,28 @@ export const SpaceDetail: React.FC = () => {
                 Back to My Spaces
               </Button>
             </div>
-            <Typography
-              variant="h3"
-              as="h1"
-              className="font-bold text-gray-900"
-            >
-              {spaceQuery.isLoading ? "Loading..." : space?.name || "Space"}
-            </Typography>
+            <div className="flex items-center gap-3">
+              {spaceQuery.isLoading ? (
+                <>
+                  <Spinner color="blue" className="h-8 w-8" />
+                  <Typography
+                    variant="h3"
+                    as="h1"
+                    className="font-bold text-gray-900"
+                  >
+                    Loading...
+                  </Typography>
+                </>
+              ) : (
+                <Typography
+                  variant="h3"
+                  as="h1"
+                  className="font-bold text-gray-900"
+                >
+                  {space?.name || "Space"}
+                </Typography>
+              )}
+            </div>
             {spaceQuery.isError && (
               <Typography variant="small" className="text-red-700 mt-1">
                 Failed to load space details
