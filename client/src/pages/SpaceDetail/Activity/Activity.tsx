@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Typography, List } from "@material-tailwind/react";
+import { Typography, List, Spinner } from "@material-tailwind/react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
@@ -82,9 +82,16 @@ export const Activity: React.FC<Props> = ({ spaceId, space }) => {
           Activity
         </Typography>
 
-        {transactions.length === 0 && (
+        {txQuery.isLoading ? (
+          <div className="flex justify-center items-center py-12">
+            <div className="text-center">
+              <Spinner color="blue" className="h-8 w-8 mx-auto mb-4" />
+              <p className="text-gray-600">Loading transactions... =^ω^=</p>
+            </div>
+          </div>
+        ) : transactions.length === 0 ? (
           <div className="text-gray-700">No transactions yet.</div>
-        )}
+        ) : null}
 
         {transactions.map((group) => (
           <div key={group.key}>
