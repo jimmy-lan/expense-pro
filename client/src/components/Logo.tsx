@@ -4,8 +4,6 @@ import { faGg } from "@fortawesome/free-brands-svg-icons";
 import { twMerge } from "tailwind-merge";
 import { SizeProp } from "@fortawesome/fontawesome-svg-core";
 import { useNavigate } from "react-router-dom";
-import { useBreakpoint } from "../hooks/useBreakpoint";
-
 export type LogoVariant = "icon" | "full";
 
 export interface LogoProps {
@@ -23,7 +21,6 @@ const Logo: React.FC<LogoProps> = ({
   textClassName,
   iconSize,
 }) => {
-  const isMobile = useBreakpoint("sm");
   const navigate = useNavigate();
   const handleLogoClick = () => {
     navigate("/my");
