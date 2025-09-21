@@ -6,6 +6,8 @@ Rails.application.routes.draw do
     namespace :v1 do
       post "signup", to: "users#create"
       get  "me",     to: "users#me"
+      patch "me/avatar", to: "users#update_avatar"
+      delete "me/avatar", to: "users#remove_avatar"
 
       post   "login",  to: "sessions#create"
       delete "logout", to: "sessions#destroy"

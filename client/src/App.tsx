@@ -11,6 +11,7 @@ import {
   NewTransactionPage,
   DeleteTransactionPage,
   SpaceDetail,
+  ProfilePage,
 } from "./pages";
 
 function App() {
@@ -32,6 +33,7 @@ function App() {
         />
         <Route path="/spaces/new" element={<NewSpacePage />} />
         <Route path="/spaces/delete" element={<DeleteSpacesPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
         <Route path="/logout/confirm" element={<SignoutConfirmPage />} />
       </Routes>
     </Router>

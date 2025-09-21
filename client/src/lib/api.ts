@@ -15,8 +15,9 @@ export async function apiFetch<TResponse>(
   init?: RequestInit
 ): Promise<TResponse> {
   const hasBody = typeof init?.body !== "undefined" && init?.body !== null;
+  const isFormData = init?.body instanceof FormData;
   const headers = {
-    ...(hasBody ? { "Content-Type": "application/json" } : {}),
+    ...(hasBody && !isFormData ? { "Content-Type": "application/json" } : {}),
     ...(init?.headers || {}),
   } as Record<string, string>;
 
@@ -78,6 +79,15 @@ export const authApi = {
     }),
   logout: () =>
     apiFetch<void>(`/api/v1/logout`, {
+      method: "DELETE",
+    }),
+  updateAvatar: (formData: FormData) =>
+    apiFetch<{ user: unknown }>(`/api/v1/me/avatar`, {
+      method: "PATCH",
+      body: formData,
+    }),
+  removeAvatar: () =>
+    apiFetch<{ user: unknown }>(`/api/v1/me/avatar`, {
       method: "DELETE",
     }),
 };
