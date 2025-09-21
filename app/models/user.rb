@@ -23,7 +23,7 @@ class User < ApplicationRecord
   def avatar_url
     # Return uploaded avatar if it exists
     return Rails.application.routes.url_helpers.rails_blob_url(avatar, only_path: true) if avatar.attached?
-    
+
     # Fallback to generated avatar
     bg = (avatar_bg_hex.presence || random_hex_color)
     fg = (avatar_fg.presence || contrast_color_for_hex(bg))

@@ -19,7 +19,7 @@ class Api::V1::UsersController < ApplicationController
 
   def update_avatar
     authenticate_user!
-    
+
     if current_user.update(avatar_params)
       render json: { user: serialize_user(current_user) }
     else
@@ -29,7 +29,7 @@ class Api::V1::UsersController < ApplicationController
 
   def remove_avatar
     authenticate_user!
-    
+
     current_user.avatar.purge if current_user.avatar.attached?
     render json: { user: serialize_user(current_user) }
   end
