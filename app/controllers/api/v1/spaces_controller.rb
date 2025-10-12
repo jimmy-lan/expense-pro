@@ -411,11 +411,13 @@ class Api::V1::SpacesController < ApplicationController
 
     space = membership.space
 
+    smc = SpaceMemberContribution.arel_table
+    sum_expr = Arel::Nodes::Grouping.new(smc[:spend_cents].plus(smc[:full_cover_cents]))
     contribs = SpaceMemberContribution
       .left_outer_joins(:user)
       .includes(:user)
       .where(space_id: space.id)
-      .order(Arel.sql("(space_member_contributions.spend_cents + space_member_contributions.full_cover_cents) DESC, space_member_contributions.spend_cents DESC, space_member_contributions.user_id ASC"))
+      .order(sum_expr.desc, smc[:spend_cents].desc, smc[:user_id].asc)
     total_transactions = space.transactions_count
 
     members = contribs.map do |c|
