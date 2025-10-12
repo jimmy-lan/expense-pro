@@ -96,21 +96,7 @@ class Transaction < ApplicationRecord
   end
 
   def record_activity_after_create
-    tx_type = amount_cents.to_i < 0 ? "spend" : "credit"
-    ActivityHistory.record!(
-      space: space,
-      actor: creator,
-      verb: "created",
-      subject: self,
-      metadata: {
-        txType: tx_type,
-        title: title,
-        description: description,
-        amountCents: amount_cents,
-        occurredAt: occurred_at,
-        fullCover: !!full_cover
-      }
-    )
+    Activity::TransactionEventRecorder.record!(verb: "created", tx: self, actor: creator)
   rescue => e
     Rails.logger.error("ActivityHistory.record! failed after create: #{e.class}: #{e.message}")
   end

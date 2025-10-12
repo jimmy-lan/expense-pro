@@ -14,7 +14,10 @@ import {
 } from "../../../lib/api";
 import { Transaction } from "./Transaction";
 import { Button } from "../../../components/ui/Button";
-import { UnseenActivityBanner } from "./UnseenActivityBanner";
+import {
+  UnseenActivitiesBanner,
+  UnseenActivitiesModal,
+} from "./UnseenActivities";
 
 // dayjs plugins
 (dayjs as any).extend(relativeTime);
@@ -79,6 +82,7 @@ export const Activity: React.FC<Props> = ({ spaceId, space }) => {
   }, [txQuery.data]);
 
   const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [unseenActivityModalOpen, setUnseenActivityModalOpen] = useState(false);
 
   return (
     <div>
@@ -90,7 +94,10 @@ export const Activity: React.FC<Props> = ({ spaceId, space }) => {
 
       <div className="flex flex-col">
         {hasUnseenQuery.data?.hasUnseen && (
-          <UnseenActivityBanner space={space} />
+          <UnseenActivitiesBanner
+            space={space}
+            onClick={() => setUnseenActivityModalOpen(true)}
+          />
         )}
 
         {transactions.length === 0 && (
@@ -138,6 +145,11 @@ export const Activity: React.FC<Props> = ({ spaceId, space }) => {
           </div>
         )}
       </div>
+      <UnseenActivitiesModal
+        spaceId={spaceId}
+        open={unseenActivityModalOpen}
+        onClose={() => setUnseenActivityModalOpen(false)}
+      />
     </div>
   );
 };

@@ -3,9 +3,9 @@ import { ListItem, Typography } from "@material-tailwind/react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faAngleRight, faBell } from "@fortawesome/free-solid-svg-icons";
 import { twMerge } from "tailwind-merge";
-import type { SpaceDto } from "../../../lib/api";
+import type { SpaceDto } from "../../../../lib/api";
 
-function alphaColor(hex?: string | null, alpha = 0.1): string | undefined {
+function alphaColor(hex?: string | null, alpha = 0.08): string | undefined {
   const clean = (hex || "").replace("#", "");
   if (clean.length !== 6) return undefined;
   const r = parseInt(clean.substring(0, 2), 16);
@@ -16,12 +16,10 @@ function alphaColor(hex?: string | null, alpha = 0.1): string | undefined {
 
 interface Props extends React.HTMLAttributes<HTMLDivElement> {
   space?: SpaceDto;
-  hasMore?: boolean;
 }
 
-export const UnseenActivityBanner: React.FC<Props> = ({
+export const UnseenActivitiesBanner: React.FC<Props> = ({
   space,
-  hasMore,
   ...otherProps
 }) => {
   const bg = alphaColor(space?.colorHex, 0.08);
@@ -32,7 +30,7 @@ export const UnseenActivityBanner: React.FC<Props> = ({
       ripple={false}
       className={twMerge(
         "relative overflow-hidden rounded-xl border bg-white p-4 my-2",
-        "border-gray-200"
+        "border-gray-200 cursor-pointer"
       )}
       style={{
         ...(bg ? { background: bg } : {}),
@@ -55,7 +53,11 @@ export const UnseenActivityBanner: React.FC<Props> = ({
                 New activities
               </Typography>
               <div className="text-sm text-gray-700 truncate">
-                Catch up on latest activities.
+                Click to catch up
+                <span className="hidden md:inline">
+                  {" "}
+                  on the latest activities.
+                </span>
               </div>
             </div>
             <FontAwesomeIcon icon={faAngleRight} className="text-gray-500" />
