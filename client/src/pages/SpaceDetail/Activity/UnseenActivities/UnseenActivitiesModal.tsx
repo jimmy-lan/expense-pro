@@ -18,6 +18,7 @@ import {
   type ActivityEventDto,
   type ActivityUnseenResponse,
 } from "../../../../lib/api";
+import { useViewportHeight } from "../../../../hooks";
 
 function formatValue(value: unknown): string {
   if (value === null || typeof value === "undefined") return "—";
@@ -66,6 +67,7 @@ export const UnseenActivitiesModal: React.FC<Props> = ({
   onClose,
 }) => {
   const qc = useQueryClient();
+  const viewportHeight = useViewportHeight();
 
   const unseenQuery = useInfiniteQuery<ActivityUnseenResponse>({
     queryKey: ["activity", "unseen", spaceId],
@@ -106,14 +108,19 @@ export const UnseenActivitiesModal: React.FC<Props> = ({
       handler={() => {}}
       size="xxl"
       dismiss={{ outsidePress: false, escapeKey: false }}
-      className="!m-0 !h-screen !w-screen flex flex-col bg-white"
+      className="!m-0 !w-screen flex flex-col bg-white !h-[100dvh]"
+      style={
+        viewportHeight
+          ? { height: viewportHeight, maxHeight: viewportHeight }
+          : undefined
+      }
     >
       <DialogHeader className="px-4 py-3 border-b border-gray-100">
         <Typography variant="h5" className="text-gray-800">
           New activities
         </Typography>
       </DialogHeader>
-      <DialogBody className="flex-1 overflow-y-auto px-0">
+      <DialogBody className="flex-1 min-h-0 overflow-y-auto px-0">
         <div className="px-4">
           {unseenQuery.isError && (
             <div className="mb-4 p-3 text-red-700 bg-red-50 border border-red-100 rounded">
