@@ -307,3 +307,49 @@ export const transactionsApi = {
     );
   },
 };
+
+// Activity History endpoints
+export interface ActivityActorDto {
+  id: number;
+  firstName?: string;
+  lastName?: string;
+  avatarUrl?: string | null;
+}
+
+export interface ActivitySubjectDto {
+  type?: string | null;
+  id?: number | null;
+}
+
+export interface ActivityEventDto {
+  id: number;
+  verb: string;
+  createdAt: string; // ISO
+  actor?: ActivityActorDto | null;
+  subject: ActivitySubjectDto;
+  metadata: Record<string, unknown>;
+}
+
+export interface ActivityUnseenResponse {
+  items: ActivityEventDto[];
+  lastCursor?: number | null;
+  hasMore: boolean;
+}
+
+export const activityHistoryApi = {
+  unseen: async (spaceId: number, params: { cursor?: number | null } = {}) => {
+    const url = new URL(
+      `/api/v1/spaces/${spaceId}/history/unseen`,
+      window.location.origin
+    );
+    if (params.cursor) url.searchParams.set("cursor", String(params.cursor));
+    const path = url.toString().replace(window.location.origin, "");
+    return apiFetch<ActivityUnseenResponse>(path, { method: "GET" });
+  },
+  markSeen: async (spaceId: number) => {
+    return apiFetch<{ lastSeenActivityId: number }>(
+      `/api/v1/spaces/${spaceId}/history/mark_seen`,
+      { method: "POST" }
+    );
+  },
+};

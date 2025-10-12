@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { Typography, List } from "@material-tailwind/react";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import isToday from "dayjs/plugin/isToday";
@@ -10,9 +10,11 @@ import {
   type TransactionDto,
   type TransactionsResponse,
   type SpaceDto,
+  activityHistoryApi,
 } from "../../../lib/api";
 import { Transaction } from "./Transaction";
 import { Button } from "../../../components/ui/Button";
+import { UnseenActivityBanner } from "./UnseenActivityBanner";
 
 // dayjs plugins
 (dayjs as any).extend(relativeTime);
@@ -32,6 +34,15 @@ interface Props {
 }
 
 export const Activity: React.FC<Props> = ({ spaceId, space }) => {
+  const unseenActivityQuery = useQuery({
+    queryKey: ["activity", "unseen", spaceId],
+    queryFn: () => activityHistoryApi.unseen(spaceId),
+    enabled: Number.isFinite(spaceId) && spaceId > 0,
+    refetchOnMount: true,
+    refetchOnReconnect: true,
+    staleTime: 0,
+  });
+
   const txQuery = useInfiniteQuery<TransactionsResponse>({
     queryKey: ["transactions", spaceId],
     queryFn: ({ pageParam }) =>
@@ -78,6 +89,14 @@ export const Activity: React.FC<Props> = ({ spaceId, space }) => {
       )}
 
       <div className="flex flex-col">
+        {unseenActivityQuery.data?.items?.length && (
+          <UnseenActivityBanner
+            space={space}
+            count={unseenActivityQuery.data?.items?.length || 0}
+            hasMore={unseenActivityQuery.data?.hasMore}
+          />
+        )}
+
         {transactions.length === 0 && (
           <div className="text-gray-700">No transactions yet.</div>
         )}
