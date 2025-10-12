@@ -178,6 +178,7 @@ export const NewTransactionPage: React.FC = () => {
             <div className="!border border-gray-400 rounded-md overflow-hidden hover:border-primary transition-border duration-300 p-2 md:p-3">
               <Checkbox
                 color="blue"
+                ripple={false}
                 label={
                   <div className="ml-1">
                     <Typography className="w-full font-medium text-gray-800">
