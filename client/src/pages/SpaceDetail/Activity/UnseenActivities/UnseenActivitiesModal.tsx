@@ -5,6 +5,7 @@ import {
   DialogBody,
   DialogFooter,
   Typography,
+  Avatar,
 } from "@material-tailwind/react";
 import { Button } from "../../../../components/ui/Button";
 import {
@@ -136,21 +137,39 @@ export const UnseenActivitiesModal: React.FC<Props> = ({
               )}`.trim();
               const metadata = a.metadata || {};
               const entries = Object.entries(metadata);
+              const actorName = [a.actor?.firstName, a.actor?.lastName]
+                .filter(Boolean)
+                .join(" ");
 
               return (
                 <li key={a.id} className="p-2 py-4 mb-2">
-                  <div className="text-sm text-gray-900 font-semibold">
-                    {title || "Activity"}
-                  </div>
-                  <div className="text-xs text-gray-600">
-                    {new Date(a.createdAt).toLocaleString()}
-                  </div>
+                  <div className="flex items-start gap-4">
+                    <Avatar
+                      src={a.actor?.avatarUrl || undefined}
+                      alt={actorName || "User"}
+                      variant="circular"
+                      className="h-8 w-8 mt-0.5"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm text-gray-900 font-semibold">
+                        {title || "Activity"}
+                      </div>
+                      <div className="text-xs text-gray-600">
+                        {new Date(a.createdAt).toLocaleString()}
+                      </div>
+                      {actorName && (
+                        <div className="mt-1 text-sm text-gray-700 truncate">
+                          {actorName}
+                        </div>
+                      )}
 
-                  {entries.length > 0 && (
-                    <div className="mt-3">
-                      <KeyValueList entries={entries} />
+                      {entries.length > 0 && (
+                        <div className="mt-3">
+                          <KeyValueList entries={entries} />
+                        </div>
+                      )}
                     </div>
-                  )}
+                  </div>
                 </li>
               );
             })}
