@@ -10,9 +10,24 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_09_21_092000) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_12_090020) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "activity_history", force: :cascade do |t|
+    t.bigint "space_id", null: false
+    t.bigint "actor_user_id"
+    t.string "verb", null: false
+    t.string "subject_type"
+    t.bigint "subject_id"
+    t.jsonb "metadata", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["actor_user_id"], name: "index_activity_history_on_actor_user_id"
+    t.index ["space_id", "id"], name: "index_activity_history_on_space_id_and_id"
+    t.index ["space_id"], name: "index_activity_history_on_space_id"
+    t.check_constraint "verb::text = ANY (ARRAY['created'::character varying, 'deleted'::character varying, 'updated'::character varying]::text[])", name: "activity_history_verb_allowed"
+  end
 
   create_table "plans", force: :cascade do |t|
     t.string "key", null: false
@@ -171,6 +186,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_21_092000) do
     t.string "role", default: "member", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "last_seen_activity_id", default: 0, null: false
     t.index ["space_id", "role"], name: "index_space_memberships_on_space_and_role"
     t.index ["space_id"], name: "index_space_memberships_on_space_id"
     t.index ["user_id", "space_id"], name: "index_space_memberships_on_user_and_space", unique: true
@@ -190,6 +206,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_21_092000) do
     t.string "color_hex", limit: 6
     t.bigint "total_spend_cents", default: 0, null: false
     t.bigint "total_credit_cents", default: 0, null: false
+    t.bigint "latest_activity_id", default: 0, null: false
     t.index "lower((name)::text), created_by_id", name: "index_spaces_on_lower_name_and_created_by_id", unique: true
     t.index ["created_by_id"], name: "index_spaces_on_created_by_id"
     t.index ["deleted_at"], name: "index_spaces_on_deleted_at"
@@ -228,6 +245,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_21_092000) do
     t.index ["plan_id"], name: "index_users_on_plan_id"
   end
 
+  add_foreign_key "activity_history", "spaces"
+  add_foreign_key "activity_history", "users", column: "actor_user_id"
   add_foreign_key "solid_queue_blocked_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_claimed_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_failed_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade

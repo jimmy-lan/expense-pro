@@ -88,6 +88,27 @@ class Api::V1::TransactionsController < ApplicationController
 
     Transaction.transaction do
       tx.destroy!
+
+      # Record deletion activity attributed to the current user (who performed the deletion)
+      begin
+        ActivityHistory.record!(
+          space: @space,
+          actor: current_user,
+          verb: "deleted",
+          subject: tx,
+          metadata: {
+            txType: (tx.amount_cents.to_i < 0 ? "spend" : "credit"),
+            id: tx.id,
+            title: tx.title,
+            description: tx.description,
+            amountCents: tx.amount_cents,
+            occurredAt: tx.occurred_at,
+            fullCover: !!tx.full_cover
+          }
+        )
+      rescue => e
+        Rails.logger.error("ActivityHistory.record! failed on destroy: #{e.class}: #{e.message}")
+      end
     end
 
     render json: { deleted: true }

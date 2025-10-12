@@ -29,6 +29,11 @@ Rails.application.routes.draw do
         end
 
         resources :transactions, only: [ :index, :create, :show, :destroy ]
+
+        scope :history do
+          get :unseen, to: "activity_history#unseen"
+          post :mark_seen, to: "activity_history#mark_seen"
+        end
       end
     end
   end

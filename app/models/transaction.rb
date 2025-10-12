@@ -14,6 +14,7 @@ class Transaction < ApplicationRecord
 
   after_create :apply_contribution_after_create
   after_destroy :revert_contribution_after_destroy
+  after_commit :record_activity_after_create, on: :create
 
   before_validation :derive_amount_cents
 
@@ -92,5 +93,25 @@ class Transaction < ApplicationRecord
       "total_spend_cents = COALESCE(total_spend_cents, 0) + ?, total_credit_cents = COALESCE(total_credit_cents, 0) + ?",
       spend_cents_delta, credit_cents_delta
     ])
+  end
+
+  def record_activity_after_create
+    tx_type = amount_cents.to_i < 0 ? "spend" : "credit"
+    ActivityHistory.record!(
+      space: space,
+      actor: creator,
+      verb: "created",
+      subject: self,
+      metadata: {
+        txType: tx_type,
+        title: title,
+        description: description,
+        amountCents: amount_cents,
+        occurredAt: occurred_at,
+        fullCover: !!full_cover
+      }
+    )
+  rescue => e
+    Rails.logger.error("ActivityHistory.record! failed after create: #{e.class}: #{e.message}")
   end
 end
