@@ -9,6 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import { spacesApi } from "../../lib/api";
 import { Activity } from "./Activity";
 import { Summary } from "./Summary";
+import { Manage } from "./Manage";
 
 export const SpaceDetail: React.FC = () => {
   const { spaceId } = useParams();
@@ -33,6 +34,11 @@ export const SpaceDetail: React.FC = () => {
       label: "Summary",
       value: "summary",
       content: <Summary spaceId={id} />,
+    },
+    {
+      label: "Manage",
+      value: "manage",
+      content: <Manage spaceId={id} />,
     },
   ];
 
