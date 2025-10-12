@@ -76,15 +76,20 @@ export const UnseenActivitiesModal: React.FC<Props> = ({
       last.hasMore ? last.lastCursor || undefined : undefined,
     enabled: open && Number.isFinite(spaceId) && spaceId > 0,
     initialPageParam: null as number | null,
+    refetchOnMount: true,
   });
 
   const items = useMemo<ActivityEventDto[]>(() => {
     return (unseenQuery.data?.pages || []).flatMap((p) => p.items);
   }, [unseenQuery.data]);
 
+  // Track the highest activity ID from loaded items
+  // Since backend returns in descending order, the first item has the highest ID
+  const highestActivityId = items[0]?.id;
+
   const acknowledgeMutation = useMutation({
     mutationFn: async () => {
-      await activityHistoryApi.markSeen(spaceId);
+      await activityHistoryApi.markSeen(spaceId, highestActivityId);
     },
     onSuccess: () => {
       // Invalidate has_unseen and unseen lists
@@ -94,7 +99,6 @@ export const UnseenActivitiesModal: React.FC<Props> = ({
     },
   });
 
-  // Full-screen dialog: use size="xxl" and custom classes to fill viewport.
   return (
     <Dialog
       open={open}
@@ -181,6 +185,7 @@ export const UnseenActivitiesModal: React.FC<Props> = ({
         <Button
           onClick={() => acknowledgeMutation.mutate()}
           loading={acknowledgeMutation.isPending}
+          disabled={!items.length}
           size="md"
         >
           Mark as Read

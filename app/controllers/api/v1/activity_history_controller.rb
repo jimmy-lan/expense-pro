@@ -54,7 +54,8 @@ class Api::V1::ActivityHistoryController < ApplicationController
   end
 
   # POST /api/v1/spaces/:space_id/history/mark_seen
-  # Marks the current user's last seen activity to the space's latest activity.
+  # Marks the current user's last seen activity to a specific activity ID.
+  # Accepts activity_id in the request body. If not provided, uses the space's latest activity.
   def mark_seen
     membership = SpaceMembership.find_by(space_id: @space.id, user_id: current_user.id)
     unless membership
@@ -62,10 +63,35 @@ class Api::V1::ActivityHistoryController < ApplicationController
       return
     end
 
-    latest = Space.where(id: @space.id).pick(:latest_activity_id).to_i
+    activity_id = params[:activity_id].to_i
+
+    # If no activity_id provided, fall back to space's latest activity
+    if activity_id.zero?
+      activity_id = Space.where(id: @space.id).pick(:latest_activity_id).to_i
+    else
+      current_last_seen = membership.last_seen_activity_id.to_i
+
+      if activity_id <= current_last_seen
+        render json: {
+          error: "Invalid activity ID"
+        }, status: :unprocessable_entity
+        return
+      end
+
+      activity_exists = ActivityHistory
+        .where(id: activity_id, space_id: @space.id)
+        .exists?
+
+      unless activity_exists
+        render json: {
+          error: "Invalid activity ID"
+        }, status: :unprocessable_entity
+        return
+      end
+    end
 
     SpaceMembership.where(id: membership.id).update_all([
-      "last_seen_activity_id = GREATEST(last_seen_activity_id, ?)", latest
+      "last_seen_activity_id = GREATEST(last_seen_activity_id, ?)", activity_id
     ])
     membership.reload
 

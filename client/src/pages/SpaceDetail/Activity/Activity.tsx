@@ -43,7 +43,6 @@ export const Activity: React.FC<Props> = ({ spaceId, space }) => {
     enabled: Number.isFinite(spaceId) && spaceId > 0,
     refetchOnMount: true,
     refetchOnReconnect: true,
-    staleTime: 0,
   });
 
   const txQuery = useInfiniteQuery<TransactionsResponse>({

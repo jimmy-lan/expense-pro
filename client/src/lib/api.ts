@@ -352,10 +352,13 @@ export const activityHistoryApi = {
       { method: "GET" }
     );
   },
-  markSeen: async (spaceId: number) => {
+  markSeen: async (spaceId: number, activityId?: number) => {
     return apiFetch<{ lastSeenActivityId: number }>(
       `/api/v1/spaces/${spaceId}/history/mark_seen`,
-      { method: "POST" }
+      {
+        method: "POST",
+        body: activityId ? JSON.stringify({ activity_id: activityId }) : null,
+      }
     );
   },
 };
