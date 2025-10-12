@@ -412,7 +412,9 @@ class Api::V1::SpacesController < ApplicationController
     space = membership.space
 
     smc = SpaceMemberContribution.arel_table
-    sum_expr = Arel::Nodes::Grouping.new(smc[:spend_cents].plus(smc[:full_cover_cents]))
+    sum_expr = Arel::Nodes::Grouping.new(
+      Arel::Nodes::Addition.new(smc[:spend_cents], smc[:full_cover_cents])
+    )
     contribs = SpaceMemberContribution
       .left_outer_joins(:user)
       .includes(:user)
