@@ -12,6 +12,7 @@ import {
   DeleteTransactionPage,
   SpaceDetail,
 } from "./pages";
+import { ProtectedRoute } from "./components";
 
 function App() {
   return (
@@ -20,18 +21,20 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<SigninPage />} />
         <Route path="/signup" element={<SignupPage />} />
-        <Route path="/my" element={<MySpacesPage />} />
-        <Route path="/my/space/:spaceId" element={<SpaceDetail />} />
-        <Route
-          path="/my/space/:spaceId/transactions/new"
-          element={<NewTransactionPage />}
-        />
-        <Route
-          path="/my/space/:spaceId/transactions/:transactionId/delete"
-          element={<DeleteTransactionPage />}
-        />
-        <Route path="/spaces/new" element={<NewSpacePage />} />
-        <Route path="/spaces/delete" element={<DeleteSpacesPage />} />
+        <Route element={<ProtectedRoute />}>
+          <Route path="/my" element={<MySpacesPage />} />
+          <Route path="/my/space/:spaceId" element={<SpaceDetail />} />
+          <Route
+            path="/my/space/:spaceId/transactions/new"
+            element={<NewTransactionPage />}
+          />
+          <Route
+            path="/my/space/:spaceId/transactions/:transactionId/delete"
+            element={<DeleteTransactionPage />}
+          />
+          <Route path="/spaces/new" element={<NewSpacePage />} />
+          <Route path="/spaces/delete" element={<DeleteSpacesPage />} />
+        </Route>
         <Route path="/logout/confirm" element={<SignoutConfirmPage />} />
       </Routes>
     </Router>
