@@ -16,19 +16,16 @@ function alphaColor(hex?: string | null, alpha = 0.1): string | undefined {
 
 interface Props extends React.HTMLAttributes<HTMLDivElement> {
   space?: SpaceDto;
-  count: number;
   hasMore?: boolean;
 }
 
 export const UnseenActivityBanner: React.FC<Props> = ({
   space,
-  count,
   hasMore,
   ...otherProps
 }) => {
   const bg = alphaColor(space?.colorHex, 0.08);
   const solid = space?.colorHex ? `#${space.colorHex}` : undefined;
-  const label = `${count}${hasMore ? "+" : ""}`;
 
   return (
     <ListItem
@@ -55,10 +52,10 @@ export const UnseenActivityBanner: React.FC<Props> = ({
                 variant="small"
                 className="text-gray-800 font-semibold"
               >
-                Unseen activity
+                New activities
               </Typography>
               <div className="text-sm text-gray-700 truncate">
-                You have {label} new update{count === 1 && !hasMore ? "" : "s"}.
+                Catch up on latest activities.
               </div>
             </div>
             <FontAwesomeIcon icon={faAngleRight} className="text-gray-500" />

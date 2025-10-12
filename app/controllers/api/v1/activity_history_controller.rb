@@ -38,6 +38,21 @@ class Api::V1::ActivityHistoryController < ApplicationController
     }
   end
 
+  # GET /api/v1/spaces/:space_id/history/has_unseen
+  # Returns whether the current user has any unseen activity in the space.
+  def has_unseen
+    membership = SpaceMembership.find_by(space_id: @space.id, user_id: current_user.id)
+    unless membership
+      render json: { error: "Space not found" }, status: :not_found
+      return
+    end
+
+    last_seen = membership.last_seen_activity_id.to_i
+    latest = Space.where(id: @space.id).pick(:latest_activity_id).to_i
+
+    render json: { hasUnseen: latest > last_seen }
+  end
+
   # POST /api/v1/spaces/:space_id/history/mark_seen
   # Marks the current user's last seen activity to the space's latest activity.
   def mark_seen

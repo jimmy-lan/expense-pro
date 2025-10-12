@@ -34,9 +34,9 @@ interface Props {
 }
 
 export const Activity: React.FC<Props> = ({ spaceId, space }) => {
-  const unseenActivityQuery = useQuery({
-    queryKey: ["activity", "unseen", spaceId],
-    queryFn: () => activityHistoryApi.unseen(spaceId),
+  const hasUnseenQuery = useQuery({
+    queryKey: ["activity", "has_unseen", spaceId],
+    queryFn: () => activityHistoryApi.hasUnseen(spaceId),
     enabled: Number.isFinite(spaceId) && spaceId > 0,
     refetchOnMount: true,
     refetchOnReconnect: true,
@@ -89,12 +89,8 @@ export const Activity: React.FC<Props> = ({ spaceId, space }) => {
       )}
 
       <div className="flex flex-col">
-        {unseenActivityQuery.data?.items?.length && (
-          <UnseenActivityBanner
-            space={space}
-            count={unseenActivityQuery.data?.items?.length || 0}
-            hasMore={unseenActivityQuery.data?.hasMore}
-          />
+        {hasUnseenQuery.data?.hasUnseen && (
+          <UnseenActivityBanner space={space} />
         )}
 
         {transactions.length === 0 && (

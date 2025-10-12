@@ -31,6 +31,7 @@ Rails.application.routes.draw do
         resources :history, controller: "activity_history" do
           collection do
             get :unseen
+            get :has_unseen
             post :mark_seen
           end
         end

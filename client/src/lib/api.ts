@@ -346,6 +346,12 @@ export const activityHistoryApi = {
     const path = url.toString().replace(window.location.origin, "");
     return apiFetch<ActivityUnseenResponse>(path, { method: "GET" });
   },
+  hasUnseen: async (spaceId: number) => {
+    return apiFetch<{ hasUnseen: boolean }>(
+      `/api/v1/spaces/${spaceId}/history/has_unseen`,
+      { method: "GET" }
+    );
+  },
   markSeen: async (spaceId: number) => {
     return apiFetch<{ lastSeenActivityId: number }>(
       `/api/v1/spaces/${spaceId}/history/mark_seen`,
