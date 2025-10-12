@@ -41,8 +41,6 @@ export const Activity: React.FC<Props> = ({ spaceId, space }) => {
     queryKey: ["activity", "has_unseen", spaceId],
     queryFn: () => activityHistoryApi.hasUnseen(spaceId),
     enabled: Number.isFinite(spaceId) && spaceId > 0,
-    refetchOnMount: true,
-    refetchOnReconnect: true,
   });
 
   const txQuery = useInfiniteQuery<TransactionsResponse>({
