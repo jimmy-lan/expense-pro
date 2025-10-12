@@ -98,6 +98,7 @@ export const NewTransactionPage: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions", id] });
+      queryClient.invalidateQueries({ queryKey: ["space", id, "summary"] });
       closePage();
     },
   });

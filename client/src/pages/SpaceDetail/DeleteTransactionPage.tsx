@@ -64,6 +64,7 @@ export const DeleteTransactionPage: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions", id] });
+      queryClient.invalidateQueries({ queryKey: ["space", id, "summary"] });
       closePage();
     },
     onError: (err) => {
