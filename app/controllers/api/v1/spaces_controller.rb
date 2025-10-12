@@ -415,6 +415,7 @@ class Api::V1::SpacesController < ApplicationController
       .left_outer_joins(:user)
       .includes(:user)
       .where(space_id: space.id)
+      .order(Arel.sql("(space_member_contributions.spend_cents + space_member_contributions.full_cover_cents) DESC, space_member_contributions.spend_cents DESC, space_member_contributions.user_id ASC"))
     total_transactions = space.transactions_count
 
     members = contribs.map do |c|
