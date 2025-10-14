@@ -1,13 +1,6 @@
 [build]
   builder = "dockerfile"
 
-[deploy]
-  # Use the container's default CMD which runs the Rails server
-  # The React client is built during the Docker image build
-  healthcheckPath = "/health"
-  healthcheckTimeout = 300
-  restartPolicyType = "never"
-
 [environments]
   [environments.production]
     RAILS_ENV = "production"
