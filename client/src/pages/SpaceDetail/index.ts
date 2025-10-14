@@ -3,3 +3,4 @@ export * from "./Activity";
 export * from "./NewTransactionPage";
 export * from "./DeleteTransactionPage";
 export * from "./Summary";
+export * from "./Manage";
